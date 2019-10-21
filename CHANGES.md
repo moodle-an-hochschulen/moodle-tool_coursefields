@@ -4,6 +4,6 @@ moodle-tool_coursedates
 Changes
 -------
 
-### Unreleased
+### v3.7-r1
 
 * 2019-10-17 - Initial version.

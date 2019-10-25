@@ -48,6 +48,20 @@ $PAGE->set_url($url);
 $PAGE->set_title(new lang_string('coursecatmanagement') . ': '. get_string('setfields', 'tool_coursefields'));
 $PAGE->set_heading($SITE->fullname);
 
+// Check if custom course fields are available
+
+$ccf_handler = core_course\customfield\course_handler::create();
+$ccf_categories = $ccf_handler->get_categories_with_fields();
+
+if (empty($ccf_categoies)){
+    // no custom course fiedls defined yet
+    echo $OUTPUT->header();
+    echo "There are no categories for custom course fields defined yet. You can define them via global admin settings, click here: ";
+    echo html_writer::link(new moodle_url('/course/customfield.php'), 'Course custom fields');
+    echo $OUTPUT->footer();
+} else {
+    // custom course fields are defined, contine with form
+
 // Create form.
 $mform = new \tool_coursefields\set_fields_form('index.php', array('category' => $categoryid));
 if ($mform->is_cancelled()) {
@@ -73,3 +87,5 @@ if ($mform->is_cancelled()) {
 echo $OUTPUT->header();
 $mform->display();
 echo $OUTPUT->footer();
+
+}

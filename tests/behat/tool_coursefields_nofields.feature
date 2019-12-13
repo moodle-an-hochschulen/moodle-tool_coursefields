@@ -16,8 +16,8 @@ Feature: The course fields tool does not allow a manager to set custom course fi
       | Course 2 | C2        | CAT2     | 1       | 1546300800 |
       | Course 3 | C3        | CAT3     | 1       | 1546300800 |
 
-   Scenario: Manager is not able to use the course fields tool if there are not any course field categories
-     When I log in as "admin"
-     And I am on course index
-     And I follow "Category 1"
-     Then "Set course fields" "link" should not exist in current page administration
+  Scenario: Manager is not able to use the course fields tool if there are not any course field categories
+    When I log in as "admin"
+    And I am on course index
+    And I follow "Category 1"
+    Then "Set course fields" "link" should not exist in current page administration

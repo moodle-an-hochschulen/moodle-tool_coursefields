@@ -32,7 +32,17 @@ defined('MOODLE_INTERNAL') || die();
  * @param context $context The category context
  */
 function tool_coursefields_extend_navigation_category_settings($navigation, $context) {
-    if (has_capability('tool/coursefields:setfields', $context)) {
+    // First check if any custom course fields (ccf) are configured at all.
+    // Just check for existing categories and not for existing course fields for performance
+    // reasons.
+    // In the remaining edge case where the admin has created custom course field categories
+    // but not any single custom course field, the plugin's UI remains confusing, but nothing
+    // will break. This is a reasonable trade-off.
+    $ccfhandler = core_course\customfield\course_handler::create();
+    $hasccf = !empty($ccfhandler->get_fields());
+
+    // If there are custom course field category, add an item to the category navigation.
+    if ($hasccf && has_capability('tool/coursefields:setfields', $context)) {
          $navigation->add_node(
              navigation_node::create(
                  get_string('setfields', 'tool_coursefields'),

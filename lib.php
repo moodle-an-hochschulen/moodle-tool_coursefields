@@ -32,7 +32,11 @@ defined('MOODLE_INTERNAL') || die();
  * @param context $context The category context
  */
 function tool_coursefields_extend_navigation_category_settings($navigation, $context) {
-    if (has_capability('tool/coursefields:setfields', $context)) {
+    // First check if custom course fields (ccf) are available at all.
+    $ccfhandler = core_course\customfield\course_handler::create();
+    $hasccf = !empty($ccfhandler->get_categories_with_fields());
+
+    if ($hasccf && has_capability('tool/coursefields:setfields', $context)) {
          $navigation->add_node(
              navigation_node::create(
                  get_string('setfields', 'tool_coursefields'),

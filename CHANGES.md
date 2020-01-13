@@ -4,7 +4,7 @@ moodle-tool_coursedates
 Changes
 -------
 
-### Unreleased
+### v3.7-r2
 
 * 2020-01-13 - Improvement: Remove an unneeded string from the language pack.
 * 2020-01-13 - Improvement: Only add the category navigation node if there are existing course fields.

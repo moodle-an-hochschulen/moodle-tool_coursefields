@@ -6,6 +6,7 @@ Changes
 
 ### Unreleased
 
+* 2020-01-13 - Improvement: Remove an unneeded string from the language pack.
 * 2020-01-13 - Improvement: Only add the category navigation node if there are existing course fields.
 
 ### v3.7-r1

@@ -4,6 +4,10 @@ moodle-tool_coursedates
 Changes
 -------
 
+### Unreleased
+
+* 2020-02-14 - Prepare compatibility for Moodle 3.8.
+
 ### v3.7-r2
 
 * 2020-01-13 - Improvement: Remove an unneeded string from the language pack.

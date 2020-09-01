@@ -6,6 +6,7 @@ Changes
 
 ### Unreleased
 
+* 2020-09-01 - Fixed Behat errors caused by implode function in PHP version 7.4.
 * 2020-09-01 - Prepare compatibility for Moodle 3.9.
 
 ### v3.8-r1

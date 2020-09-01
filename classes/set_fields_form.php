@@ -93,7 +93,7 @@ class set_fields_form extends \moodleform
                 $staticelementnotes[] = get_string('fieldisunique', 'tool_coursefields');
             }
             if (count($staticelementnotes) > 0) {
-                $staticelement = $mform->createElement('static', $staticelementname, '', implode($staticelementnotes, '<br />'));
+                $staticelement = $mform->createElement('static', $staticelementname, '', implode('<br />', $staticelementnotes));
                 $mform->insertElementBefore($staticelement, $elementname);
             }
 

@@ -4,7 +4,7 @@ moodle-tool_coursedates
 Changes
 -------
 
-### Unreleased
+### v3.9-r1
 
 * 2020-09-01 - Fixed Behat errors caused by implode function in PHP version 7.4.
 * 2020-09-01 - Prepare compatibility for Moodle 3.9.

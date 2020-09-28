@@ -32,6 +32,8 @@ defined('MOODLE_INTERNAL') || die();
  * @param context $context The category context
  */
 function tool_coursefields_extend_navigation_category_settings($navigation, $context) {
+    global $CFG;
+
     // First check if any custom course fields (ccf) are configured at all.
     // Just check for existing categories and not for existing course fields for performance
     // reasons.
@@ -47,7 +49,7 @@ function tool_coursefields_extend_navigation_category_settings($navigation, $con
              navigation_node::create(
                  get_string('setfields', 'tool_coursefields'),
                     new moodle_url(
-                        '/admin/tool/coursefields/index.php',
+                        '/'.$CFG->admin.'/tool/coursefields/index.php',
                         array('category' => $context->instanceid)
                     ),
                     navigation_node::TYPE_SETTING,

@@ -35,7 +35,7 @@ require_capability('tool/coursefields:setfields', $context);
 $returnurl = new \moodle_url('/course/management.php', array('categoryid' => $categoryid));
 
 // Current location.
-$url = new \moodle_url('/admin/tool/coursefields/index.php',
+$url = new \moodle_url('/'.$CFG->admin.'/tool/coursefields/index.php',
     array(
         'category' => $categoryid
     )

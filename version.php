@@ -28,4 +28,5 @@ $plugin->component = 'tool_coursefields';
 $plugin->version = 2020092800;
 $plugin->release = 'v3.9-r2';
 $plugin->requires = 2020061500;
+$plugin->supported = [39, 39];
 $plugin->maturity = MATURITY_STABLE;

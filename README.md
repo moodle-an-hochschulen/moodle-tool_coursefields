@@ -1,7 +1,7 @@
 moodle-tool_coursefields
 ========================
 
-[![Build Status](https://travis-ci.com/moodleuulm/moodle-tool_coursefields.svg?branch=master)](https://travis-ci.com/moodleuulm/moodle-tool_coursefields)
+[![Moodle Plugin CI](https://github.com/moodleuulm/moodle-tool_coursefields/workflows/Moodle%20Plugin%20CI/badge.svg?branch=master)](https://github.com/moodleuulm/moodle-tool_coursefields/actions?query=workflow%3A%22Moodle+Plugin+CI%22+branch%3Amaster)
 
 Moodle admin tool plugin which allows managers to set and overwrite custom course field values for all courses in a category, including subcategories. 
 

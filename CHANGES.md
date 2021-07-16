@@ -4,6 +4,10 @@ moodle-tool_coursedates
 Changes
 -------
 
+### v3.11-r2
+
+* 2021-07-16 - Amend uncommited changes.
+
 ### v3.11-r1
 
 * 2021-06-13 - Prepare compatibility for Moodle 3.11.

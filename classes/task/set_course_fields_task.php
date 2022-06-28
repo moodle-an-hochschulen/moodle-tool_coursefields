@@ -25,8 +25,6 @@
 
 namespace tool_coursefields\task;
 
-defined('MOODLE_INTERNAL') || die;
-
 /**
  * Adhoc task for setting course fields.
  *

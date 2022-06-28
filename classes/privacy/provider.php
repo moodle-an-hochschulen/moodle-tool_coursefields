@@ -24,8 +24,6 @@
 
 namespace tool_coursefields\privacy;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Privacy Subsystem implementing null provider.
  *

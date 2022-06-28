@@ -37,8 +37,7 @@ require_once($CFG->libdir . '/formslib.php');
  *             based on tool_coursedates, copyright 2017 Lafayette College ITS
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class set_fields_form extends \moodleform
-{
+class set_fields_form extends \moodleform {
     /**
      * Defines the form.
      */

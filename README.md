@@ -38,6 +38,16 @@ After installing the plugin, it is ready to use without the need for any configu
 To use the plugin, administrators and users who have the tool/coursefields:setfields (assigned by default to the manager role archetype during plugin installation) will find a new menu item 'Set course fields' in the cog menu of each course category overview page.
 
 
+Capabilities
+------------
+
+This plugin also introduces these additional capabilities:
+
+### tool/coursefields:setfields
+
+This capability controls who is able to set the course fields of all courses in a category.
+
+
 How this plugin works
 ---------------------
 

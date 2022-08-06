@@ -9,7 +9,7 @@ Moodle admin tool plugin which allows managers to set and overwrite custom cours
 Requirements
 ------------
 
-This plugin requires Moodle 3.11+
+This plugin requires Moodle 4.0+
 
 
 Motivation for this plugin

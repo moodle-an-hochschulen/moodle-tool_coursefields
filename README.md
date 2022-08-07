@@ -35,7 +35,7 @@ Usage & Settings
 
 After installing the plugin, it is ready to use without the need for any configuration.
 
-To use the plugin, administrators and users who have the tool/coursefields:setfields (assigned by default to the manager role archetype during plugin installation) will find a new menu item 'Set course fields' in the cog menu of each course category overview page.
+To use the plugin, administrators and users who have the tool/coursefields:setfields (assigned by default to the manager role archetype during plugin installation) will find a new menu item 'Set course fields' in the secondary menu of each course category overview page.
 
 
 Capabilities

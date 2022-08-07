@@ -7,14 +7,14 @@ Feature: The course fields tool allows a manager to set custom course fields in 
   Background:
     Given the following "categories" exist:
       | name       | category | idnumber | visible |
-      | Category 1 | 0        | CAT1     | 0       |
-      | Category 2 | CAT1     | CAT2     | 0       |
-      | Category 3 | 0        | CAT3     | 0       |
+      | Category A | 0        | CATA     | 0       |
+      | Category B | CATA     | CATB     | 0       |
+      | Category C | 0        | CATC     | 0       |
     And the following "courses" exist:
       | fullname | shortname | category | visible | startdate  |
-      | Course 1 | C1        | CAT2     | 1       | 1546300800 |
-      | Course 2 | C2        | CAT2     | 1       | 1546300800 |
-      | Course 3 | C3        | CAT3     | 1       | 1546300800 |
+      | Course 1 | C1        | CATA     | 1       | 1546300800 |
+      | Course 2 | C2        | CATB     | 1       | 1546300800 |
+      | Course 3 | C3        | CATC     | 1       | 1546300800 |
     And the following "custom field categories" exist:
       | name              | component   | area   | itemid |
       | Category for test | core_course | course | 0      |
@@ -29,7 +29,7 @@ Feature: The course fields tool allows a manager to set custom course fields in 
   Scenario: Manager does set currently empty fields in the given category and subcategory, leaving other categories untouched
     When I log in as "admin"
     And I am on course index
-    And I follow "Category 1"
+    And I follow "Category A"
     And I navigate to "Set course fields" in current page administration
     And I set the following fields to these values:
       | id_customfieldcheckbox_f1        | 1            |
@@ -47,9 +47,9 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | Field 5                          | b            |
     And I press "Confirm"
     And I should see "An adhoc task has been queued"
-    And I trigger cron
+    And I run all adhoc tasks
     And I am on "Course 1" course homepage
-    And I navigate to "Edit settings" in current page administration
+    And I navigate to "Settings" in current page administration
     Then the following fields match these values:
       | Field 1                   | testcontent1 |
       | Field 2                   | testcontent2 |
@@ -60,7 +60,7 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | id_customfield_f4_year    | 2019         |
       | Field 5                   | b            |
     And I am on "Course 2" course homepage
-    And I navigate to "Edit settings" in current page administration
+    And I navigate to "Settings" in current page administration
     And the following fields match these values:
       | Field 1                   | testcontent1 |
       | Field 2                   | testcontent2 |
@@ -71,7 +71,7 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | id_customfield_f4_year    | 2019         |
       | Field 5                   | b            |
     And I am on "Course 3" course homepage
-    And I navigate to "Edit settings" in current page administration
+    And I navigate to "Settings" in current page administration
     And the following fields match these values:
       | Field 1                   |   |
       | Field 2                   |   |
@@ -83,7 +83,7 @@ Feature: The course fields tool allows a manager to set custom course fields in 
   Scenario: Manager does overwrite existing field values in the given category and subcategory, leaving other categories untouched
     When I log in as "admin"
     And I am on "Course 1" course homepage
-    And I navigate to "Edit settings" in current page administration
+    And I navigate to "Settings" in current page administration
     And I set the following fields to these values:
       | Field 1                   | testcontent0 |
       | Field 2                   | testcontent0 |
@@ -95,7 +95,7 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | Field 5                   | a            |
     And I press "Save and display"
     And I am on "Course 2" course homepage
-    And I navigate to "Edit settings" in current page administration
+    And I navigate to "Settings" in current page administration
     And I set the following fields to these values:
       | Field 1                   | testcontent0 |
       | Field 2                   | testcontent0 |
@@ -107,7 +107,7 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | Field 5                   | a            |
     And I press "Save and display"
     And I am on "Course 3" course homepage
-    And I navigate to "Edit settings" in current page administration
+    And I navigate to "Settings" in current page administration
     And I set the following fields to these values:
       | Field 1                   | testcontent0 |
       | Field 2                   | testcontent0 |
@@ -119,7 +119,7 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | Field 5                   | a            |
     And I press "Save and display"
     And I am on course index
-    And I follow "Category 1"
+    And I follow "Category A"
     And I navigate to "Set course fields" in current page administration
     Then I set the following fields to these values:
       | id_customfieldcheckbox_f1        | 1            |
@@ -137,9 +137,9 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | Field 5                          | b            |
     And I press "Confirm"
     And I should see "An adhoc task has been queued"
-    And I trigger cron
+    And I run all adhoc tasks
     And I am on "Course 1" course homepage
-    And I navigate to "Edit settings" in current page administration
+    And I navigate to "Settings" in current page administration
     Then the following fields match these values:
       | Field 1                   | testcontent1 |
       | Field 2                   | testcontent2 |
@@ -150,7 +150,7 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | id_customfield_f4_year    | 2019         |
       | Field 5                   | b            |
     And I am on "Course 2" course homepage
-    And I navigate to "Edit settings" in current page administration
+    And I navigate to "Settings" in current page administration
     And the following fields match these values:
       | Field 1                   | testcontent1 |
       | Field 2                   | testcontent2 |
@@ -161,7 +161,7 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | id_customfield_f4_year    | 2019         |
       | Field 5                   | b            |
     And I am on "Course 3" course homepage
-    And I navigate to "Edit settings" in current page administration
+    And I navigate to "Settings" in current page administration
     And the following fields match these values:
       | Field 1                   | testcontent0 |
       | Field 2                   | testcontent0 |
@@ -176,7 +176,7 @@ Feature: The course fields tool allows a manager to set custom course fields in 
   Scenario: Manager does overwrite only one existing field, leaving the other fields untouched
     When I log in as "admin"
     And I am on "Course 1" course homepage
-    And I navigate to "Edit settings" in current page administration
+    And I navigate to "Settings" in current page administration
     And I set the following fields to these values:
       | Field 1                   | testcontent0 |
       | Field 2                   | testcontent0 |
@@ -188,7 +188,7 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | Field 5                   | a            |
     And I press "Save and display"
     And I am on course index
-    And I follow "Category 1"
+    And I follow "Category A"
     And I navigate to "Set course fields" in current page administration
     Then I set the following fields to these values:
       | id_customfieldcheckbox_f1        | 1            |
@@ -199,9 +199,9 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | id_customfieldcheckbox_f5        | 0            |
     And I press "Confirm"
     And I should see "An adhoc task has been queued"
-    And I trigger cron
+    And I run all adhoc tasks
     And I am on "Course 1" course homepage
-    And I navigate to "Edit settings" in current page administration
+    And I navigate to "Settings" in current page administration
     Then the following fields match these values:
       | Field 1                   | testcontent1 |
       | Field 2                   | testcontent0 |
@@ -216,7 +216,7 @@ Feature: The course fields tool allows a manager to set custom course fields in 
   Scenario: Manager does not overwrite any fields, thus leaving all existing values untouched
     When I log in as "admin"
     And I am on "Course 1" course homepage
-    And I navigate to "Edit settings" in current page administration
+    And I navigate to "Settings" in current page administration
     And I set the following fields to these values:
       | Field 1                   | testcontent0 |
       | Field 2                   | testcontent0 |
@@ -228,7 +228,7 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | Field 5                   | a            |
     And I press "Save and display"
     And I am on course index
-    And I follow "Category 1"
+    And I follow "Category A"
     And I navigate to "Set course fields" in current page administration
     Then I set the following fields to these values:
       | id_customfieldcheckbox_f1        | 0 |
@@ -238,9 +238,9 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | id_customfieldcheckbox_f5        | 0 |
     And I press "Confirm"
     And I should see "An adhoc task has been queued"
-    And I trigger cron
+    And I run all adhoc tasks
     And I am on "Course 1" course homepage
-    And I navigate to "Edit settings" in current page administration
+    And I navigate to "Settings" in current page administration
     Then the following fields match these values:
       | Field 1                   | testcontent0 |
       | Field 2                   | testcontent0 |
@@ -258,20 +258,20 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | Field 6 | Category for test | text     | f6        | d6          | {"uniquevalues":"1"} |
     When I log in as "admin"
     And I am on course index
-    And I follow "Category 1"
+    And I follow "Category A"
     And I navigate to "Set course fields" in current page administration
     Then I set the following fields to these values:
       | id_customfieldcheckbox_f6 | 1         |
       | Field 6                   | nonunique |
     And I press "Confirm"
     And I should see "An adhoc task has been queued"
-    And I trigger cron
+    And I run all adhoc tasks
     And I am on "Course 1" course homepage
-    And I navigate to "Edit settings" in current page administration
+    And I navigate to "Settings" in current page administration
     Then the following fields match these values:
       | Field 6 | nonunique |
     And I am on "Course 2" course homepage
-    And I navigate to "Edit settings" in current page administration
+    And I navigate to "Settings" in current page administration
     Then the following fields match these values:
       | Field 6 | nonunique |
     And I log out
@@ -282,16 +282,16 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | Field 6 | Category for test | text     | f6        | d6          | {"required":"1"} |
     When I log in as "admin"
     And I am on course index
-    And I follow "Category 1"
+    And I follow "Category A"
     And I navigate to "Set course fields" in current page administration
     Then I set the following fields to these values:
       | id_customfieldcheckbox_f6 | 1 |
       | Field 6                   |   |
     And I press "Confirm"
     And I should see "An adhoc task has been queued"
-    And I trigger cron
+    And I run all adhoc tasks
     And I am on "Course 1" course homepage
-    And I navigate to "Edit settings" in current page administration
+    And I navigate to "Settings" in current page administration
     Then the following fields match these values:
       | Field 6 | |
     And I log out

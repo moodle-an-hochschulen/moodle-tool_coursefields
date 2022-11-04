@@ -4,7 +4,7 @@ moodle-tool_coursedates
 Changes
 -------
 
-### Unreleased
+### v4.0-r1
 
 * 2022-07-12 - Fix Behat tests which broke with Moodle 4.0.
 * 2022-07-12 - Prepare compatibility for Moodle 4.0.

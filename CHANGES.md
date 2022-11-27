@@ -4,7 +4,7 @@ moodle-tool_coursedates
 Changes
 -------
 
-### Unreleased
+### v3.10-r4
 
 * 2022-11-27 - Remove a leftover from a patch in README.md
 

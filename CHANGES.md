@@ -4,6 +4,10 @@ moodle-tool_coursedates
 Changes
 -------
 
+### Unreleased
+
+* 2022-11-27 - Remove a leftover from a patch in README.md
+
 ### v3.9-r5
 
 * 2022-07-10 - Add Visual checks section to UPGRADE.md

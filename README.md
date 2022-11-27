@@ -1,11 +1,7 @@
 moodle-tool_coursefields
 ========================
 
-<<<<<<< HEAD
 [![Moodle Plugin CI](https://github.com/moodle-an-hochschulen/moodle-tool_coursefields/workflows/Moodle%20Plugin%20CI/badge.svg?branch=MOODLE_310_STABLE)](https://github.com/moodle-an-hochschulen/moodle-tool_coursefields/actions?query=workflow%3A%22Moodle+Plugin+CI%22+branch%3AMOODLE_310_STABLE)
-=======
-[![Moodle Plugin CI](https://github.com/moodle-an-hochschulen/moodle-tool_coursefields/workflows/Moodle%20Plugin%20CI/badge.svg?branch=master)](https://github.com/moodle-an-hochschulen/moodle-tool_coursefields/actions?query=workflow%3A%22Moodle+Plugin+CI%22+branch%3Amaster)
->>>>>>> dda5026 (Update maintainers and copyrights in README.md)
 
 Moodle admin tool plugin which allows managers to set and overwrite custom course field values for all courses in a category, including subcategories.
 

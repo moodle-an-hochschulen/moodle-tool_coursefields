@@ -26,8 +26,8 @@
 require_once(__DIR__ . '/../../../config.php');
 
 $categoryid = required_param('category', PARAM_INT);
-$category   = \core_course_category::get($categoryid);
-$context    = \context_coursecat::instance($categoryid);
+$category = \core_course_category::get($categoryid);
+$context = \context_coursecat::instance($categoryid);
 
 // Ensure the user can be here.
 require_login(0, false);

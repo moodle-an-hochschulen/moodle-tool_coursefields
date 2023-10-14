@@ -62,10 +62,10 @@ class set_course_fields_task extends \core\task\adhoc_task {
             return;
         }
         $courses = $category->get_courses(
-            array(
+            [
                 'recursive' => true,
-                'limit' => 0
-            )
+                'limit' => 0,
+            ]
         );
         foreach ($courses as $course) {
             \tool_coursefields\set_fields::maybe_alter_course_fields($course, $data->fields);

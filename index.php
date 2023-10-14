@@ -32,13 +32,13 @@ $context = \context_coursecat::instance($categoryid);
 // Ensure the user can be here.
 require_login(0, false);
 require_capability('tool/coursefields:setfields', $context);
-$returnurl = new \moodle_url('/course/management.php', array('categoryid' => $categoryid));
+$returnurl = new \moodle_url('/course/management.php', ['categoryid' => $categoryid]);
 
 // Current location.
 $url = new \moodle_url('/'.$CFG->admin.'/tool/coursefields/index.php',
-    array(
-        'category' => $categoryid
-    )
+    [
+        'category' => $categoryid,
+    ]
 );
 
 // Setup page.
@@ -49,24 +49,24 @@ $PAGE->set_title(new lang_string('coursecatmanagement') . ': '. get_string('setf
 $PAGE->set_heading($SITE->fullname);
 
 // Create form.
-$mform = new \tool_coursefields\set_fields_form('index.php', array('category' => $categoryid));
+$mform = new \tool_coursefields\set_fields_form('index.php', ['category' => $categoryid]);
 if ($mform->is_cancelled()) {
     redirect($returnurl);
 } else if ($data = $mform->get_data()) {
     // Process data.
     $task = new \tool_coursefields\task\set_course_fields_task();
     $task->set_custom_data(
-        array(
+        [
             'category' => $categoryid,
-            'fields' => $data
-        )
+            'fields' => $data,
+        ]
     );
     \core\task\manager::queue_adhoc_task($task);
     redirect($returnurl, get_string('updatequeued', 'tool_coursefields',
-        format_string($category->name, true, array('context' => $context))));
+        format_string($category->name, true, ['context' => $context])));
 } else {
     // Prepare the form.
-    $mform->set_data(array('category' => $categoryid));
+    $mform->set_data(['category' => $categoryid]);
 }
 
 // Print page.

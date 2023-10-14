@@ -25,13 +25,13 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$capabilities = array(
-    'tool/coursefields:setfields' => array(
+$capabilities = [
+    'tool/coursefields:setfields' => [
         'captype' => 'write',
         'contextlevel' => CONTEXT_COURSECAT,
-        'archetypes' => array(
-            'manager' => CAP_ALLOW
-        ),
-        'clonepermissionsfrom' => 'moodle/category:manage'
-    ),
-);
+        'archetypes' => [
+            'manager' => CAP_ALLOW,
+        ],
+        'clonepermissionsfrom' => 'moodle/category:manage',
+    ],
+];

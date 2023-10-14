@@ -84,7 +84,7 @@ class set_fields_form extends \moodleform {
 
             // Add a static element in front of the field to inform the admin about the details of the field.
             $staticelementname = 'customfieldstatic_'.$shortname;
-            $staticelementnotes = array();
+            $staticelementnotes = [];
             if ($field->get_configdata_property('required') == 1) {
                 $staticelementnotes[] = get_string('fieldisrequired', 'tool_coursefields');
             }
@@ -104,8 +104,8 @@ class set_fields_form extends \moodleform {
         }
 
         // Get rid of any required rules in this form as these won't validate correctly with the checkbox elements.
-        $mform->_required = array();
-        $mform->_rules = array();
+        $mform->_required = [];
+        $mform->_rules = [];
 
         // Metadata.
         $mform->addElement('hidden', 'category');

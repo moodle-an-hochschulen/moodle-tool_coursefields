@@ -48,6 +48,12 @@ This plugin also introduces these additional capabilities:
 This capability controls who is able to set the course fields of all courses in a category.
 
 
+Scheduled Tasks
+---------------
+
+This plugin does not add any additional scheduled tasks.
+
+
 How this plugin works
 ---------------------
 

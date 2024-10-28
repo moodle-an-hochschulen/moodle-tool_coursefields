@@ -53,7 +53,7 @@ function tool_coursefields_extend_navigation_category_settings($navigation, $con
                     navigation_node::TYPE_SETTING,
                     null,
                     null,
-                    new pix_icon('i/settings', '')
+                    new \core\output\pix_icon('i/settings', '')
                     )
                 );
     }

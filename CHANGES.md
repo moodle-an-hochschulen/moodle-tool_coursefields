@@ -4,6 +4,10 @@ moodle-tool_coursedates
 Changes
 -------
 
+### Unreleased
+
+* 2024-10-28 - Improvement: Use get_string() instead of lang_string class in index.php
+
 ### v4.3-r2
 
 * 2024-08-11 - Add section for scheduled tasks to README

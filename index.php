@@ -45,7 +45,7 @@ $url = new \moodle_url('/'.$CFG->admin.'/tool/coursefields/index.php',
 $PAGE->set_context($context);
 $PAGE->set_pagelayout('admin');
 $PAGE->set_url($url);
-$PAGE->set_title(new lang_string('coursecatmanagement') . ': '. get_string('setfields', 'tool_coursefields'));
+$PAGE->set_title(get_string('coursecatmanagement') . ': '. get_string('setfields', 'tool_coursefields'));
 $PAGE->set_heading($SITE->fullname);
 
 // Create form.

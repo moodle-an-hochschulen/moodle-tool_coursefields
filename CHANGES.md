@@ -4,7 +4,7 @@ moodle-tool_coursedates
 Changes
 -------
 
-### Unreleased
+### v4.1-r4
 
 * 2024-10-28 - Improvement: Use get_string() instead of lang_string class in index.php
 

@@ -46,7 +46,7 @@ function tool_coursefields_extend_navigation_category_settings($navigation, $con
          $navigation->add_node(
              navigation_node::create(
                  get_string('setfields', 'tool_coursefields'),
-                    new moodle_url(
+                    new \core\url(
                         '/'.$CFG->admin.'/tool/coursefields/index.php',
                         ['category' => $context->instanceid]
                     ),

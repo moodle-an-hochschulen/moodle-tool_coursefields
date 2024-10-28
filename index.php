@@ -32,10 +32,10 @@ $context = \context_coursecat::instance($categoryid);
 // Ensure the user can be here.
 require_login(0, false);
 require_capability('tool/coursefields:setfields', $context);
-$returnurl = new \moodle_url('/course/management.php', ['categoryid' => $categoryid]);
+$returnurl = new \core\url('/course/management.php', ['categoryid' => $categoryid]);
 
 // Current location.
-$url = new \moodle_url('/'.$CFG->admin.'/tool/coursefields/index.php',
+$url = new \core\url('/'.$CFG->admin.'/tool/coursefields/index.php',
     [
         'category' => $categoryid,
     ]

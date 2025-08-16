@@ -4,6 +4,11 @@ moodle-tool_coursedates
 Changes
 -------
 
+### Unreleased
+
+* 2026-02-15 - Improvement: Add mtrace messages to the ad-hoc task output.
+* 2026-02-15 - Improvement: Add options to only update empty fields, resolves #5
+
 ### v5.1-r1
 
 * 2025-10-26 - Prepare compatibility for Moodle 5.1.

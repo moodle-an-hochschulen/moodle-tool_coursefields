@@ -25,26 +25,31 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | Field 3 | Category for test | checkbox | f3        | d3          |                       |
       | Field 4 | Category for test | date     | f4        | d4          |                       |
       | Field 5 | Category for test | select   | f5        | d5          | {"options":"a\nb\nc"} |
+      | Field 6 | Category for test | number   | f6        | d6          |                       |
 
+  @javascript
   Scenario: Manager does set currently empty fields in the given category and subcategory, leaving other categories untouched
     When I log in as "admin"
     And I am on course index
     And I follow "Category A"
     And I navigate to "Set course fields" in current page administration
+    And I click on "Overwrite the field for all courses" "radio" in the "#fgroup_id_customfieldgroup_f1" "css_element"
+    And I click on "Overwrite the field for all courses" "radio" in the "#fgroup_id_customfieldgroup_f2_editor" "css_element"
+    And I click on "Overwrite the field for all courses" "radio" in the "#fgroup_id_customfieldgroup_f3" "css_element"
+    And I click on "Overwrite the field for all courses" "radio" in the "#fgroup_id_customfieldgroup_f4" "css_element"
+    And I click on "Overwrite the field for all courses" "radio" in the "#fgroup_id_customfieldgroup_f5" "css_element"
+    And I click on "Overwrite the field for all courses" "radio" in the "#fgroup_id_customfieldgroup_f6" "css_element"
+    And I click on "Overwrite the field for all courses" "radio" in the "#fgroup_id_customfieldgroup_f1" "css_element"
     And I set the following fields to these values:
-      | id_customfieldcheckbox_f1        | 1            |
       | Field 1                          | testcontent1 |
-      | id_customfieldcheckbox_f2_editor | 1            |
       | Field 2                          | testcontent2 |
-      | id_customfieldcheckbox_f3        | 1            |
       | Field 3                          | 1            |
-      | id_customfieldcheckbox_f4        | 1            |
       | id_customfield_f4_enabled        | 1            |
       | id_customfield_f4_day            | 1            |
       | id_customfield_f4_month          | January      |
       | id_customfield_f4_year           | 2019         |
-      | id_customfieldcheckbox_f5        | 1            |
       | Field 5                          | b            |
+      | Field 6                          | 42           |
     And I press "Confirm"
     And I should see "An adhoc task has been queued"
     And I run all adhoc tasks
@@ -59,6 +64,7 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | id_customfield_f4_month   | January      |
       | id_customfield_f4_year    | 2019         |
       | Field 5                   | b            |
+      | Field 6                   | 42           |
     And I am on "Course 2" course homepage
     And I navigate to "Settings" in current page administration
     And the following fields match these values:
@@ -70,6 +76,7 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | id_customfield_f4_month   | January      |
       | id_customfield_f4_year    | 2019         |
       | Field 5                   | b            |
+      | Field 6                   | 42           |
     And I am on "Course 3" course homepage
     And I navigate to "Settings" in current page administration
     And the following fields match these values:
@@ -78,8 +85,10 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | Field 3                   | 0 |
       | id_customfield_f4_enabled | 0 |
       | Field 5                   |   |
+      | Field 6                   |   |
     And I log out
 
+  @javascript
   Scenario: Manager does overwrite existing field values in the given category and subcategory, leaving other categories untouched
     When I log in as "admin"
     And I am on "Course 1" course homepage
@@ -93,6 +102,7 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | id_customfield_f4_month   | February     |
       | id_customfield_f4_year    | 2017         |
       | Field 5                   | a            |
+      | Field 6                   | 10           |
     And I press "Save and display"
     And I am on "Course 2" course homepage
     And I navigate to "Settings" in current page administration
@@ -105,6 +115,7 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | id_customfield_f4_month   | February     |
       | id_customfield_f4_year    | 2017         |
       | Field 5                   | a            |
+      | Field 6                   | 10           |
     And I press "Save and display"
     And I am on "Course 3" course homepage
     And I navigate to "Settings" in current page administration
@@ -117,24 +128,27 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | id_customfield_f4_month   | February     |
       | id_customfield_f4_year    | 2017         |
       | Field 5                   | a            |
+      | Field 6                   | 10           |
     And I press "Save and display"
     And I am on course index
     And I follow "Category A"
     And I navigate to "Set course fields" in current page administration
-    Then I set the following fields to these values:
-      | id_customfieldcheckbox_f1        | 1            |
-      | Field 1                          | testcontent1 |
-      | id_customfieldcheckbox_f2_editor | 1            |
-      | Field 2                          | testcontent2 |
-      | id_customfieldcheckbox_f3        | 1            |
-      | Field 3                          | 1            |
-      | id_customfieldcheckbox_f4        | 1            |
-      | id_customfield_f4_enabled        | 1            |
-      | id_customfield_f4_day            | 1            |
-      | id_customfield_f4_month          | January      |
-      | id_customfield_f4_year           | 2019         |
-      | id_customfieldcheckbox_f5        | 1            |
-      | Field 5                          | b            |
+    And I click on "Overwrite the field for all courses" "radio" in the "#fgroup_id_customfieldgroup_f1" "css_element"
+    And I click on "Overwrite the field for all courses" "radio" in the "#fgroup_id_customfieldgroup_f2_editor" "css_element"
+    And I click on "Overwrite the field for all courses" "radio" in the "#fgroup_id_customfieldgroup_f3" "css_element"
+    And I click on "Overwrite the field for all courses" "radio" in the "#fgroup_id_customfieldgroup_f4" "css_element"
+    And I click on "Overwrite the field for all courses" "radio" in the "#fgroup_id_customfieldgroup_f5" "css_element"
+    And I click on "Overwrite the field for all courses" "radio" in the "#fgroup_id_customfieldgroup_f6" "css_element"
+    And I set the following fields to these values:
+      | Field 1                   | testcontent1 |
+      | Field 2                   | testcontent2 |
+      | Field 3                   | 1            |
+      | id_customfield_f4_enabled | 1            |
+      | id_customfield_f4_day     | 1            |
+      | id_customfield_f4_month   | January      |
+      | id_customfield_f4_year    | 2019         |
+      | Field 5                   | b            |
+      | Field 6                   | 42           |
     And I press "Confirm"
     And I should see "An adhoc task has been queued"
     And I run all adhoc tasks
@@ -149,6 +163,7 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | id_customfield_f4_month   | January      |
       | id_customfield_f4_year    | 2019         |
       | Field 5                   | b            |
+      | Field 6                   | 42           |
     And I am on "Course 2" course homepage
     And I navigate to "Settings" in current page administration
     And the following fields match these values:
@@ -160,6 +175,7 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | id_customfield_f4_month   | January      |
       | id_customfield_f4_year    | 2019         |
       | Field 5                   | b            |
+      | Field 6                   | 42           |
     And I am on "Course 3" course homepage
     And I navigate to "Settings" in current page administration
     And the following fields match these values:
@@ -171,8 +187,77 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | id_customfield_f4_month   | February     |
       | id_customfield_f4_year    | 2017         |
       | Field 5                   | a            |
+      | Field 6                   | 10           |
     And I log out
 
+  @javascript
+  Scenario: Manager does set only empty fields (except checkbox fields) in the given category and subcategory, leaving other categories untouched
+    When I log in as "admin"
+    And I am on "Course 1" course homepage
+    And I navigate to "Settings" in current page administration
+    And I set the following fields to these values:
+      | Field 1                   | testcontent0 |
+      | Field 2                   | testcontent0 |
+      | id_customfield_f4_enabled | 1            |
+      | id_customfield_f4_day     | 2            |
+      | id_customfield_f4_month   | February     |
+      | id_customfield_f4_year    | 2017         |
+      | Field 5                   | a            |
+      | Field 6                   | 10           |
+    And I press "Save and display"
+    And I am on course index
+    And I follow "Category A"
+    And I navigate to "Set course fields" in current page administration
+    And I click on "Only set the field for courses where the field is empty" "radio" in the "#fgroup_id_customfieldgroup_f1" "css_element"
+    And I click on "Only set the field for courses where the field is empty" "radio" in the "#fgroup_id_customfieldgroup_f2_editor" "css_element"
+    And I click on "Only set the field for courses where the field is empty" "radio" in the "#fgroup_id_customfieldgroup_f4" "css_element"
+    And I click on "Only set the field for courses where the field is empty" "radio" in the "#fgroup_id_customfieldgroup_f5" "css_element"
+    And I click on "Only set the field for courses where the field is empty" "radio" in the "#fgroup_id_customfieldgroup_f6" "css_element"
+    And I set the following fields to these values:
+      | Field 1                   | testcontent1 |
+      | Field 2                   | testcontent2 |
+      | id_customfield_f4_enabled | 1            |
+      | id_customfield_f4_day     | 1            |
+      | id_customfield_f4_month   | January      |
+      | id_customfield_f4_year    | 2019         |
+      | Field 5                   | b            |
+      | Field 6                   | 42           |
+    And I press "Confirm"
+    And I should see "An adhoc task has been queued"
+    And I run all adhoc tasks
+    And I am on "Course 1" course homepage
+    And I navigate to "Settings" in current page administration
+    Then the following fields match these values:
+      | Field 1                   | testcontent0 |
+      | Field 2                   | testcontent0 |
+      | id_customfield_f4_enabled | 1            |
+      | id_customfield_f4_day     | 2            |
+      | id_customfield_f4_month   | February     |
+      | id_customfield_f4_year    | 2017         |
+      | Field 5                   | a            |
+      | Field 6                   | 10           |
+    And I am on "Course 2" course homepage
+    And I navigate to "Settings" in current page administration
+    And the following fields match these values:
+      | Field 1                   | testcontent1 |
+      | Field 2                   | testcontent2 |
+      | id_customfield_f4_enabled | 1            |
+      | id_customfield_f4_day     | 1            |
+      | id_customfield_f4_month   | January      |
+      | id_customfield_f4_year    | 2019         |
+      | Field 5                   | b            |
+      | Field 6                   | 42           |
+    And I am on "Course 3" course homepage
+    And I navigate to "Settings" in current page administration
+    And the following fields match these values:
+      | Field 1                   |   |
+      | Field 2                   |   |
+      | id_customfield_f4_enabled | 0 |
+      | Field 5                   |   |
+      | Field 6                   |   |
+    And I log out
+
+  @javascript
   Scenario: Manager does overwrite only one existing field, leaving the other fields untouched
     When I log in as "admin"
     And I am on "Course 1" course homepage
@@ -186,17 +271,19 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | id_customfield_f4_month   | February     |
       | id_customfield_f4_year    | 2017         |
       | Field 5                   | a            |
+      | Field 6                   | 10           |
     And I press "Save and display"
     And I am on course index
     And I follow "Category A"
     And I navigate to "Set course fields" in current page administration
-    Then I set the following fields to these values:
-      | id_customfieldcheckbox_f1        | 1            |
-      | Field 1                          | testcontent1 |
-      | id_customfieldcheckbox_f2_editor | 0            |
-      | id_customfieldcheckbox_f3        | 0            |
-      | id_customfieldcheckbox_f4        | 0            |
-      | id_customfieldcheckbox_f5        | 0            |
+    And I click on "Overwrite the field for all courses" "radio" in the "#fgroup_id_customfieldgroup_f1" "css_element"
+    And I click on "Do not change the field at all" "radio" in the "#fgroup_id_customfieldgroup_f2_editor" "css_element"
+    And I click on "Do not change the field at all" "radio" in the "#fgroup_id_customfieldgroup_f3" "css_element"
+    And I click on "Do not change the field at all" "radio" in the "#fgroup_id_customfieldgroup_f4" "css_element"
+    And I click on "Do not change the field at all" "radio" in the "#fgroup_id_customfieldgroup_f5" "css_element"
+    And I click on "Do not change the field at all" "radio" in the "#fgroup_id_customfieldgroup_f6" "css_element"
+    And I set the following fields to these values:
+      | Field 1 | testcontent1 |
     And I press "Confirm"
     And I should see "An adhoc task has been queued"
     And I run all adhoc tasks
@@ -211,8 +298,10 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | id_customfield_f4_month   | February     |
       | id_customfield_f4_year    | 2017         |
       | Field 5                   | a            |
+      | Field 6                   | 10           |
     And I log out
 
+  @javascript
   Scenario: Manager does not overwrite any fields, thus leaving all existing values untouched
     When I log in as "admin"
     And I am on "Course 1" course homepage
@@ -226,16 +315,17 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | id_customfield_f4_month   | February     |
       | id_customfield_f4_year    | 2017         |
       | Field 5                   | a            |
+      | Field 6                   | 10           |
     And I press "Save and display"
     And I am on course index
     And I follow "Category A"
     And I navigate to "Set course fields" in current page administration
-    Then I set the following fields to these values:
-      | id_customfieldcheckbox_f1        | 0 |
-      | id_customfieldcheckbox_f2_editor | 0 |
-      | id_customfieldcheckbox_f3        | 0 |
-      | id_customfieldcheckbox_f4        | 0 |
-      | id_customfieldcheckbox_f5        | 0 |
+    And I click on "Do not change the field at all" "radio" in the "#fgroup_id_customfieldgroup_f1" "css_element"
+    And I click on "Do not change the field at all" "radio" in the "#fgroup_id_customfieldgroup_f2_editor" "css_element"
+    And I click on "Do not change the field at all" "radio" in the "#fgroup_id_customfieldgroup_f3" "css_element"
+    And I click on "Do not change the field at all" "radio" in the "#fgroup_id_customfieldgroup_f4" "css_element"
+    And I click on "Do not change the field at all" "radio" in the "#fgroup_id_customfieldgroup_f5" "css_element"
+    And I click on "Do not change the field at all" "radio" in the "#fgroup_id_customfieldgroup_f6" "css_element"
     And I press "Confirm"
     And I should see "An adhoc task has been queued"
     And I run all adhoc tasks
@@ -250,48 +340,51 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | id_customfield_f4_month   | February     |
       | id_customfield_f4_year    | 2017         |
       | Field 5                   | a            |
+      | Field 6                   | 10           |
     And I log out
 
+  @javascript
   Scenario: Manager does overwrite a unique field with the same string without problems
     Given the following "custom fields" exist:
       | name    | category          | type     | shortname | description | configdata           |
-      | Field 6 | Category for test | text     | f6        | d6          | {"uniquevalues":"1"} |
+      | Field 7 | Category for test | text     | f7        | d7          | {"uniquevalues":"1"} |
     When I log in as "admin"
     And I am on course index
     And I follow "Category A"
     And I navigate to "Set course fields" in current page administration
-    Then I set the following fields to these values:
-      | id_customfieldcheckbox_f6 | 1         |
-      | Field 6                   | nonunique |
+    And I click on "Overwrite the field for all courses" "radio" in the "#fgroup_id_customfieldgroup_f7" "css_element"
+    And I set the following fields to these values:
+      | Field 7 | nonunique |
     And I press "Confirm"
     And I should see "An adhoc task has been queued"
     And I run all adhoc tasks
     And I am on "Course 1" course homepage
     And I navigate to "Settings" in current page administration
     Then the following fields match these values:
-      | Field 6 | nonunique |
+      | Field 7 | nonunique |
     And I am on "Course 2" course homepage
     And I navigate to "Settings" in current page administration
     Then the following fields match these values:
-      | Field 6 | nonunique |
+      | Field 7 | nonunique |
     And I log out
 
+  @javascript
   Scenario: Manager does overwrite a required field with an empty value without problems
     Given the following "custom fields" exist:
       | name    | category          | type     | shortname | description | configdata       |
-      | Field 6 | Category for test | text     | f6        | d6          | {"required":"1"} |
+      | Field 7 | Category for test | text     | f7        | d7          | {"required":"1"} |
     When I log in as "admin"
     And I am on course index
     And I follow "Category A"
     And I navigate to "Set course fields" in current page administration
-    Then I set the following fields to these values:
-      | id_customfieldcheckbox_f6 | 1 |
-      | Field 6                   |   |
+    And I click on "Overwrite the field for all courses" "radio" in the "#fgroup_id_customfieldgroup_f7" "css_element"
+    And I set the following fields to these values:
+      | Field 7 | |
     And I press "Confirm"
     And I should see "An adhoc task has been queued"
     And I run all adhoc tasks
     And I am on "Course 1" course homepage
     And I navigate to "Settings" in current page administration
     Then the following fields match these values:
-      | Field 6 | |
+      | Field 7 | |
     And I log out

@@ -37,6 +37,19 @@ After installing the plugin, it is ready to use without the need for any configu
 
 To use the plugin, administrators and users who have the tool/coursefields:setfields (assigned by default to the manager role archetype during plugin installation) will find a new menu item 'Set course fields' in the secondary menu of each course category overview page.
 
+### Updating course fields
+
+When you use the 'Set course fields' page to update custom course fields for multiple courses, you can choose how each field should be updated:
+
+* Do not change the field at all:\
+If you select this option, the field will not be touched at all after you submit the form.
+
+* Overwrite the field for all courses:\
+If you select this option, the field will be overwritten with the given value, regardless of its previous value. This option can also be used to clear the field for all courses, simply by overwriting it with an empty value.
+
+* Only set the field for courses where the field is empty:\
+If you select this option, the field will be only be set to the given value if it does not contain a non-empty value yet. Please note that this mode is only available for selected field types from Moodle core as the check if a field is really empty cannot be generalized.
+
 
 Capabilities
 ------------

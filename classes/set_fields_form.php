@@ -28,6 +28,7 @@ namespace tool_coursefields;
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir . '/formslib.php');
+require_once($CFG->dirroot . '/admin/tool/coursefields/lib.php');
 
 /**
  * Form for changing course fields.
@@ -76,15 +77,58 @@ class set_fields_form extends \moodleform {
             $headerelement = $mform->createElement('static', $headerelementname, '<h4>' . $formattedname . '</h4>');
             $mform->insertElementBefore($headerelement, $elementname);
 
-            // Add a checkbox element in front of the field to control if this value should be overwritten.
-            $checkboxelementname = 'customfieldcheckbox_' . $shortname;
-            $checkboxelement = $mform->createElement(
-                'advcheckbox',
-                $checkboxelementname,
+            // Add a radio button group element in front of the field to control if and how this value should be updated.
+            $rgroupname = 'customfieldupdate_' . $shortname;
+            $rgroup = [
+                $mform->createElement(
+                    'radio',
+                    $rgroupname,
+                    '',
+                    get_string('overwritemode_none', 'tool_coursefields'),
+                    TOOL_COURSEFIELDS_NONE
+                ),
+                $mform->createElement(
+                    'radio',
+                    $rgroupname,
+                    '',
+                    get_string('overwritemode_all', 'tool_coursefields'),
+                    TOOL_COURSEFIELDS_ALL
+                ),
+            ];
+
+            // Check if field type supports "Only if empty" mode.
+            $fieldtype = $field->get('type');
+            $supportsemptymode = \tool_coursefields\set_fields::supports_empty_mode($fieldtype);
+
+            // Add "Only if empty" option (disabled if not supported).
+            if (!$supportsemptymode) {
+                $emptyradiostring = get_string('overwritemode_empty', 'tool_coursefields').' ['.get_string('nopossiblefieldtype', 'tool_coursefields').']';
+            } else {
+                $emptyradiostring = get_string('overwritemode_empty', 'tool_coursefields');
+            }
+            $emptyradio = $mform->createElement(
+                'radio',
+                $rgroupname,
                 '',
-                get_string('overwritefield', 'tool_coursefields')
+                $emptyradiostring,
+                TOOL_COURSEFIELDS_EMPTY
             );
-            $mform->insertElementBefore($checkboxelement, $elementname);
+            if (!$supportsemptymode) {
+                $emptyradio->updateAttributes(['disabled' => 'disabled']);
+            }
+            $rgroup[] = $emptyradio;
+
+            // Finish the radio group element and add it to the form.
+            $mform->addGroup(
+                $rgroup,
+                'customfieldgroup_' . $shortname,
+                get_string('overwritemode', 'tool_coursefields'),
+                '<br>',
+                false
+            );
+            $mform->addHelpButton('customfieldgroup_' . $shortname, 'overwritemode', 'tool_coursefields');
+            $mform->setDefault($rgroupname, TOOL_COURSEFIELDS_NONE);
+            $mform->insertElementBefore($mform->removeElement('customfieldgroup_' . $shortname, false), $elementname);
 
             // Add a static element in front of the field to inform the admin about the details of the field.
             $staticelementname = 'customfieldstatic_' . $shortname;
@@ -100,8 +144,8 @@ class set_fields_form extends \moodleform {
                 $mform->insertElementBefore($staticelement, $elementname);
             }
 
-            // Disable the field as long as the checkbox element is not activated.
-            $mform->disabledIf($elementname, $checkboxelementname);
+            // Hide the field if "Do not change" or "Clear" is selected.
+            $mform->hideIf($elementname, 'customfieldupdate_' . $shortname, 'eq', TOOL_COURSEFIELDS_NONE);
 
             unset(
                 $shortname,
@@ -109,8 +153,8 @@ class set_fields_form extends \moodleform {
                 $formattedname,
                 $headerelementname,
                 $headerelement,
-                $checkboxelementname,
-                $checkboxelement,
+                $rgroupname,
+                $rgroup,
                 $staticelementname,
                 $staticelementnotes,
                 $staticelement

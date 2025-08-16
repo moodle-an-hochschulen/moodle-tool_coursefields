@@ -23,6 +23,11 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+// Define update mode constants.
+define('TOOL_COURSEFIELDS_NONE', 'none');
+define('TOOL_COURSEFIELDS_ALL', 'all');
+define('TOOL_COURSEFIELDS_EMPTY', 'empty');
+
 /**
  * Extends the category navigation to show the course fields tool.
  *

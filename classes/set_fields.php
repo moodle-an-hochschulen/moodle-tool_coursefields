@@ -27,7 +27,7 @@ namespace tool_coursefields;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot.'/course/lib.php');
+require_once($CFG->dirroot . '/course/lib.php');
 
 /**
  * Helper functions for tool_coursefields.
@@ -70,7 +70,10 @@ class set_fields {
                 $fieldname = substr($key, 12);
 
                 // Continue if the corresponding checkbox element was not activated.
-                if (!isset($fields->{'customfieldcheckbox_'.$fieldname}) || $fields->{'customfieldcheckbox_'.$fieldname} != true) {
+                if (
+                    !isset($fields->{'customfieldcheckbox_' . $fieldname}) ||
+                        $fields->{'customfieldcheckbox_' . $fieldname} != true
+                ) {
                     continue;
                 }
 

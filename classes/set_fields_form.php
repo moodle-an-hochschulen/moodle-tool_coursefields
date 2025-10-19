@@ -64,26 +64,30 @@ class set_fields_form extends \moodleform {
             // If we are dealing with a customfield_textarea fieldtype, the shortname needs special treatment.
             // For now, this special treatment is hardcoded.
             if ($field->get('type') == 'textarea') {
-                $shortname = $shortname.'_editor';
+                $shortname = $shortname . '_editor';
             }
 
             // Get some more field metadata.
-            $elementname = 'customfield_'.$shortname;
+            $elementname = 'customfield_' . $shortname;
             $formattedname = $field->get_formatted_name();
 
             // Add a header to help the user identify the following form element as a group.
-            $headerelementname = 'customfieldheader_'.$shortname;
-            $headerelement = $mform->createElement('static', $headerelementname, '<h4>'.$formattedname.'</h4>');
+            $headerelementname = 'customfieldheader_' . $shortname;
+            $headerelement = $mform->createElement('static', $headerelementname, '<h4>' . $formattedname . '</h4>');
             $mform->insertElementBefore($headerelement, $elementname);
 
             // Add a checkbox element in front of the field to control if this value should be overwritten.
-            $checkboxelementname = 'customfieldcheckbox_'.$shortname;
-            $checkboxelement = $mform->createElement('advcheckbox', $checkboxelementname, '',
-                    get_string('overwritefield', 'tool_coursefields'));
+            $checkboxelementname = 'customfieldcheckbox_' . $shortname;
+            $checkboxelement = $mform->createElement(
+                'advcheckbox',
+                $checkboxelementname,
+                '',
+                get_string('overwritefield', 'tool_coursefields')
+            );
             $mform->insertElementBefore($checkboxelement, $elementname);
 
             // Add a static element in front of the field to inform the admin about the details of the field.
-            $staticelementname = 'customfieldstatic_'.$shortname;
+            $staticelementname = 'customfieldstatic_' . $shortname;
             $staticelementnotes = [];
             if ($field->get_configdata_property('required') == 1) {
                 $staticelementnotes[] = get_string('fieldisrequired', 'tool_coursefields');
@@ -99,8 +103,18 @@ class set_fields_form extends \moodleform {
             // Disable the field as long as the checkbox element is not activated.
             $mform->disabledIf($elementname, $checkboxelementname);
 
-            unset($shortname, $elementname, $formattedname, $headerelementname, $headerelement, $checkboxelementname,
-                    $checkboxelement, $staticelementname, $staticelementnotes, $staticelement);
+            unset(
+                $shortname,
+                $elementname,
+                $formattedname,
+                $headerelementname,
+                $headerelement,
+                $checkboxelementname,
+                $checkboxelement,
+                $staticelementname,
+                $staticelementnotes,
+                $staticelement
+            );
         }
 
         // Get rid of any required rules in this form as these won't validate correctly with the checkbox elements.

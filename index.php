@@ -35,7 +35,8 @@ require_capability('tool/coursefields:setfields', $context);
 $returnurl = new \core\url('/course/management.php', ['categoryid' => $categoryid]);
 
 // Current location.
-$url = new \core\url('/'.$CFG->admin.'/tool/coursefields/index.php',
+$url = new \core\url(
+    '/' . $CFG->admin . '/tool/coursefields/index.php',
     [
         'category' => $categoryid,
     ]
@@ -45,7 +46,7 @@ $url = new \core\url('/'.$CFG->admin.'/tool/coursefields/index.php',
 $PAGE->set_context($context);
 $PAGE->set_pagelayout('admin');
 $PAGE->set_url($url);
-$PAGE->set_title(get_string('coursecatmanagement') . ': '. get_string('setfields', 'tool_coursefields'));
+$PAGE->set_title(get_string('coursecatmanagement') . ': ' . get_string('setfields', 'tool_coursefields'));
 $PAGE->set_heading($SITE->fullname);
 
 // Create form.
@@ -62,8 +63,11 @@ if ($mform->is_cancelled()) {
         ]
     );
     \core\task\manager::queue_adhoc_task($task);
-    redirect($returnurl, get_string('updatequeued', 'tool_coursefields',
-        format_string($category->name, true, ['context' => $context])));
+    redirect($returnurl, get_string(
+        'updatequeued',
+        'tool_coursefields',
+        format_string($category->name, true, ['context' => $context])
+    ));
 } else {
     // Prepare the form.
     $mform->set_data(['category' => $categoryid]);

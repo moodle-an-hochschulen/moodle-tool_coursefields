@@ -278,4 +278,238 @@ final class tool_coursefields_test extends \advanced_testcase {
         $this->assertFalse(set_fields::supports_empty_mode('checkbox'));
         $this->assertFalse(set_fields::supports_empty_mode('unsupportedtype'));
     }
+
+    /**
+     * Test is_field_value_empty function for all field types.
+     *
+     * Tests the centralized logic that determines if a field value is empty.
+     */
+    public function test_is_field_value_empty(): void {
+        // Text fields.
+        $this->assertTrue(set_fields::is_field_value_empty('text', null), 'Text: null should be empty');
+        $this->assertTrue(set_fields::is_field_value_empty('text', ''), 'Text: empty string should be empty');
+        $this->assertTrue(set_fields::is_field_value_empty('text', '   '), 'Text: whitespace should be empty');
+        $this->assertTrue(set_fields::is_field_value_empty('text', '<p></p>'), 'Text: empty HTML should be empty');
+        $this->assertFalse(set_fields::is_field_value_empty('text', 'value'), 'Text: "value" should not be empty');
+        $this->assertFalse(set_fields::is_field_value_empty('text', '0'), 'Text: "0" should not be empty');
+
+        // Textarea fields (array format).
+        $this->assertTrue(set_fields::is_field_value_empty('textarea', null), 'Textarea: null should be empty');
+        $this->assertTrue(set_fields::is_field_value_empty('textarea', ['text' => '']), 'Textarea: empty text should be empty');
+        $this->assertTrue(set_fields::is_field_value_empty('textarea', ['text' => '   ']), 'Textarea: whitespace should be empty');
+        $this->assertTrue(set_fields::is_field_value_empty('textarea', ['text' => '<p></p>']), 'Textarea: empty HTML should be empty');
+        $this->assertFalse(set_fields::is_field_value_empty('textarea', ['text' => 'content']), 'Textarea: "content" should not be empty');
+
+        // Date fields.
+        $this->assertTrue(set_fields::is_field_value_empty('date', null), 'Date: null should be empty');
+        $this->assertTrue(set_fields::is_field_value_empty('date', 0), 'Date: 0 should be empty');
+        $this->assertFalse(set_fields::is_field_value_empty('date', 1234567890), 'Date: timestamp should not be empty');
+
+        // Select fields.
+        $this->assertTrue(set_fields::is_field_value_empty('select', null), 'Select: null should be empty');
+        $this->assertTrue(set_fields::is_field_value_empty('select', 0), 'Select: 0 should be empty');
+        $this->assertFalse(set_fields::is_field_value_empty('select', 1), 'Select: 1 should not be empty');
+        $this->assertFalse(set_fields::is_field_value_empty('select', 2), 'Select: 2 should not be empty');
+
+        // Number fields.
+        $this->assertTrue(set_fields::is_field_value_empty('number', null), 'Number: null should be empty');
+        $this->assertTrue(set_fields::is_field_value_empty('number', ''), 'Number: empty string should be empty');
+        $this->assertFalse(set_fields::is_field_value_empty('number', 0), 'Number: 0 should not be empty');
+        $this->assertFalse(set_fields::is_field_value_empty('number', '0'), 'Number: "0" should not be empty');
+        $this->assertFalse(set_fields::is_field_value_empty('number', 42), 'Number: 42 should not be empty');
+        $this->assertFalse(set_fields::is_field_value_empty('number', -5), 'Number: -5 should not be empty');
+    }
+
+    /**
+     * Test form validation for required fields.
+     *
+     * Tests that the form prevents setting required fields to empty values.
+     */
+    public function test_form_validation_required_fields(): void {
+        global $DB;
+
+        // Create and login as admin.
+        $this->setAdminUser();
+
+        // Create category.
+        $category = $this->getDataGenerator()->create_category(['name' => 'Test Category']);
+
+        // Create custom field category.
+        $fieldcategory = $this->getDataGenerator()->create_custom_field_category([
+            'component' => 'core_course',
+            'area' => 'course',
+            'name' => 'Test Fields',
+        ]);
+
+        // Create required text field.
+        $requiredfield = $this->getDataGenerator()->create_custom_field([
+            'categoryid' => $fieldcategory->get('id'),
+            'type' => 'text',
+            'shortname' => 'requiredfield',
+            'name' => 'Required Field',
+            'configdata' => json_encode(['required' => '1']),
+        ]);
+
+        // Create required textarea field.
+        $requiredtextarea = $this->getDataGenerator()->create_custom_field([
+            'categoryid' => $fieldcategory->get('id'),
+            'type' => 'textarea',
+            'shortname' => 'requiredtextarea',
+            'name' => 'Required Textarea',
+            'configdata' => json_encode(['required' => '1']),
+        ]);
+
+        // Create non-required text field for comparison.
+        $normalfield = $this->getDataGenerator()->create_custom_field([
+            'categoryid' => $fieldcategory->get('id'),
+            'type' => 'text',
+            'shortname' => 'normalfield',
+            'name' => 'Normal Field',
+            'configdata' => null,
+        ]);
+
+        // Create form instance.
+        $form = new set_fields_form(null, ['category' => $category->id]);
+
+        // Test 1: Required text field with empty value and mode "Overwrite" should fail validation.
+        $data = [
+            'category' => $category->id,
+            'customfield_requiredfield' => '',
+            'customfieldupdate_requiredfield' => TOOL_COURSEFIELDS_ALL,
+            'customfield_normalfield' => 'somevalue',
+            'customfieldupdate_normalfield' => TOOL_COURSEFIELDS_NONE,
+        ];
+        $errors = $form->validation($data, []);
+        $this->assertArrayHasKey('customfield_requiredfield', $errors, 'Validation should fail for empty required text field');
+        $this->assertStringContainsString('required', strtolower($errors['customfield_requiredfield']));
+
+        // Test 2: Required text field with non-empty value should pass validation.
+        $data['customfield_requiredfield'] = 'nonemptyvalue';
+        $errors = $form->validation($data, []);
+        $this->assertArrayNotHasKey('customfield_requiredfield', $errors, 'Validation should pass for non-empty required text field');
+
+        // Test 3: Required text field with mode "Do not change" should pass validation (even if empty).
+        $data['customfield_requiredfield'] = '';
+        $data['customfieldupdate_requiredfield'] = TOOL_COURSEFIELDS_NONE;
+        $errors = $form->validation($data, []);
+        $this->assertArrayNotHasKey('customfield_requiredfield', $errors, 'Validation should pass when mode is "Do not change"');
+
+        // Test 4: Non-required field with empty value should pass validation.
+        $data['customfield_normalfield'] = '';
+        $data['customfieldupdate_normalfield'] = TOOL_COURSEFIELDS_ALL;
+        $data['customfield_requiredfield'] = 'nonemptyvalue';
+        $data['customfieldupdate_requiredfield'] = TOOL_COURSEFIELDS_ALL;
+        $errors = $form->validation($data, []);
+        $this->assertArrayNotHasKey('customfield_normalfield', $errors, 'Validation should pass for empty non-required field');
+
+        // Test 5: Required textarea with empty text should fail validation.
+        $data = [
+            'category' => $category->id,
+            'customfield_requiredtextarea_editor' => [
+                'text' => '',
+                'format' => FORMAT_HTML,
+            ],
+            'customfieldupdate_requiredtextarea_editor' => TOOL_COURSEFIELDS_ALL,
+        ];
+        $errors = $form->validation($data, []);
+        $this->assertArrayHasKey('customfield_requiredtextarea_editor', $errors,
+            'Validation should fail for empty required textarea');
+
+        // Test 6: Required textarea with non-empty text should pass validation.
+        $data['customfield_requiredtextarea_editor']['text'] = 'Some content';
+        $errors = $form->validation($data, []);
+        $this->assertArrayNotHasKey('customfield_requiredtextarea_editor', $errors,
+            'Validation should pass for non-empty required textarea');
+
+        // Test 7: Required textarea with only whitespace should fail validation.
+        $data['customfield_requiredtextarea_editor']['text'] = '   ';
+        $errors = $form->validation($data, []);
+        $this->assertArrayHasKey('customfield_requiredtextarea_editor', $errors,
+            'Validation should fail for whitespace-only required textarea');
+    }
+
+    /**
+     * Test form validation for unique fields.
+     *
+     * Tests that the form prevents setting unique fields to values that already exist in other courses.
+     * Validates that uniqueness checks are system-wide, not just within a category.
+     */
+    public function test_form_validation_unique_fields(): void {
+        global $DB;
+
+        // Create and login as admin.
+        $this->setAdminUser();
+
+        // Create two categories.
+        $category1 = $this->getDataGenerator()->create_category(['name' => 'Test Category 1']);
+        $category2 = $this->getDataGenerator()->create_category(['name' => 'Test Category 2']);
+
+        // Create a course in category 1 with existing value.
+        $existingcourse = $this->getDataGenerator()->create_course(['category' => $category1->id]);
+
+        // Create custom field category.
+        $fieldcategory = $this->getDataGenerator()->create_custom_field_category([
+            'component' => 'core_course',
+            'area' => 'course',
+            'name' => 'Test Fields',
+        ]);
+
+        // Create unique text field.
+        $uniquefield = $this->getDataGenerator()->create_custom_field([
+            'categoryid' => $fieldcategory->get('id'),
+            'type' => 'text',
+            'shortname' => 'uniquefield',
+            'name' => 'Unique Field',
+            'configdata' => json_encode(['uniquevalues' => '1']),
+        ]);
+
+        // Set value for existing course in category 1.
+        $courserecord = $DB->get_record('course', ['id' => $existingcourse->id], '*', MUST_EXIST);
+        $courserecord->customfield_uniquefield = 'existingvalue';
+        update_course($courserecord);
+
+        // Test 1: Trying to set a unique field with an existing value in same category should fail validation.
+        $form = new set_fields_form(null, ['category' => $category1->id]);
+        $data = [
+            'category' => $category1->id,
+            'customfield_uniquefield' => 'existingvalue',
+            'customfieldupdate_uniquefield' => TOOL_COURSEFIELDS_ALL,
+        ];
+        $errors = $form->validation($data, []);
+        $this->assertArrayHasKey('customfield_uniquefield', $errors,
+            'Validation should fail when trying to set a unique field with a duplicate value in same category');
+        $this->assertStringContainsString('already used', strtolower($errors['customfield_uniquefield']));
+
+        // Test 2: Trying to set a unique field with an existing value in different category should also fail (system-wide check).
+        $form2 = new set_fields_form(null, ['category' => $category2->id]);
+        $data2 = [
+            'category' => $category2->id,
+            'customfield_uniquefield' => 'existingvalue',
+            'customfieldupdate_uniquefield' => TOOL_COURSEFIELDS_ALL,
+        ];
+        $errors2 = $form2->validation($data2, []);
+        $this->assertArrayHasKey('customfield_uniquefield', $errors2,
+            'Validation should fail when trying to set a unique field with a duplicate value in different category (system-wide check)');
+        $this->assertStringContainsString('already used', strtolower($errors2['customfield_uniquefield']));
+
+        // Test 3: Setting a unique field with a new value should pass validation.
+        $data['customfield_uniquefield'] = 'newuniquevalue';
+        $errors3 = $form->validation($data, []);
+        $this->assertArrayNotHasKey('customfield_uniquefield', $errors3,
+            'Validation should pass when setting a unique field with a unique value');
+
+        // Test 4: Setting a unique field with mode "Do not change" should pass validation (even if duplicate).
+        $data['customfield_uniquefield'] = 'existingvalue';
+        $data['customfieldupdate_uniquefield'] = TOOL_COURSEFIELDS_NONE;
+        $errors4 = $form->validation($data, []);
+        $this->assertArrayNotHasKey('customfield_uniquefield', $errors4,
+            'Validation should pass when mode is "Do not change" even with duplicate value');
+
+        // Test 5: Setting a unique field with an empty value should pass validation (uniqueness is only for non-empty values).
+        $data['customfield_uniquefield'] = '';
+        $data['customfieldupdate_uniquefield'] = TOOL_COURSEFIELDS_ALL;
+        $errors5 = $form->validation($data, []);
+        $this->assertArrayNotHasKey('customfield_uniquefield', $errors5,
+            'Validation should pass when setting a unique field with an empty value');
+    }
 }

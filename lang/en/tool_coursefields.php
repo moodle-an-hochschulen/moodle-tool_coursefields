@@ -26,9 +26,9 @@
 defined('MOODLE_INTERNAL') || die;
 
 $string['coursefields:setfields'] = 'Set the course fields of all courses in a category.';
-$string['fieldisrequired'] = '<strong>This custom field is set to be required.</strong> With this tool, you are able override this rule and overwrite this field with empty values. Please do this only if you know what you are doing.';
-$string['fieldisunique'] = '<strong>This custom field is set to be unique.</strong> With this tool, you are able override this rule and overwrite this field with all the same values. Please do this only if you know what you are doing.';
+$string['fieldrequirederror'] = 'The field "{$a}" is required and cannot be empty.';
 $string['nopossiblefieldtype'] = 'Not possible for this field type';
+$string['nopossibleunique'] = 'Not possible for unique fields';
 $string['overwritemode'] = 'Update mode';
 $string['overwritemode_all'] = 'Overwrite the field for all courses';
 $string['overwritemode_empty'] = 'Only set the field for courses where the field is empty';

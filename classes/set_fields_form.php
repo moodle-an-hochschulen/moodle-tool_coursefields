@@ -79,6 +79,14 @@ class set_fields_form extends \moodleform {
 
             // Add a radio button group element in front of the field to control if and how this value should be updated.
             $rgroupname = 'customfieldupdate_' . $shortname;
+
+            // Check field properties.
+            $fieldtype = $field->get('type');
+            $isunique = ($field->get_configdata_property('uniquevalues') == 1);
+            $isrequired = ($field->get_configdata_property('required') == 1);
+            $supportsemptymode = \tool_coursefields\set_fields::supports_empty_mode($fieldtype);
+
+            // Create "Do not change" option (always available).
             $rgroup = [
                 $mform->createElement(
                     'radio',
@@ -87,24 +95,34 @@ class set_fields_form extends \moodleform {
                     get_string('overwritemode_none', 'tool_coursefields'),
                     TOOL_COURSEFIELDS_NONE
                 ),
-                $mform->createElement(
-                    'radio',
-                    $rgroupname,
-                    '',
-                    get_string('overwritemode_all', 'tool_coursefields'),
-                    TOOL_COURSEFIELDS_ALL
-                ),
             ];
 
-            // Check if field type supports "Only if empty" mode.
-            $fieldtype = $field->get('type');
-            $supportsemptymode = \tool_coursefields\set_fields::supports_empty_mode($fieldtype);
+            // Create "Overwrite" option (disabled for unique fields).
+            $overwriteradiostring = get_string('overwritemode_all', 'tool_coursefields');
+            if ($isunique) {
+                $overwriteradiostring .= ' [' . get_string('nopossibleunique', 'tool_coursefields') . ']';
+            }
+            $overwriteradio = $mform->createElement(
+                'radio',
+                $rgroupname,
+                '',
+                $overwriteradiostring,
+                TOOL_COURSEFIELDS_ALL
+            );
+            if ($isunique) {
+                $overwriteradio->updateAttributes(['disabled' => 'disabled']);
+            }
+            $rgroup[] = $overwriteradio;
 
-            // Add "Only if empty" option (disabled if not supported).
-            if (!$supportsemptymode) {
-                $emptyradiostring = get_string('overwritemode_empty', 'tool_coursefields').' ['.get_string('nopossiblefieldtype', 'tool_coursefields').']';
-            } else {
-                $emptyradiostring = get_string('overwritemode_empty', 'tool_coursefields');
+            // Create "Only if empty" option (disabled if field type doesn't support it or if field is unique).
+            $emptyradiostring = get_string('overwritemode_empty', 'tool_coursefields');
+            $emptydisabled = false;
+            if ($isunique) {
+                $emptyradiostring .= ' [' . get_string('nopossibleunique', 'tool_coursefields') . ']';
+                $emptydisabled = true;
+            } else if (!$supportsemptymode) {
+                $emptyradiostring .= ' [' . get_string('nopossiblefieldtype', 'tool_coursefields') . ']';
+                $emptydisabled = true;
             }
             $emptyradio = $mform->createElement(
                 'radio',
@@ -113,7 +131,7 @@ class set_fields_form extends \moodleform {
                 $emptyradiostring,
                 TOOL_COURSEFIELDS_EMPTY
             );
-            if (!$supportsemptymode) {
+            if ($emptydisabled) {
                 $emptyradio->updateAttributes(['disabled' => 'disabled']);
             }
             $rgroup[] = $emptyradio;
@@ -129,20 +147,6 @@ class set_fields_form extends \moodleform {
             $mform->addHelpButton('customfieldgroup_' . $shortname, 'overwritemode', 'tool_coursefields');
             $mform->setDefault($rgroupname, TOOL_COURSEFIELDS_NONE);
             $mform->insertElementBefore($mform->removeElement('customfieldgroup_' . $shortname, false), $elementname);
-
-            // Add a static element in front of the field to inform the admin about the details of the field.
-            $staticelementname = 'customfieldstatic_' . $shortname;
-            $staticelementnotes = [];
-            if ($field->get_configdata_property('required') == 1) {
-                $staticelementnotes[] = get_string('fieldisrequired', 'tool_coursefields');
-            }
-            if ($field->get_configdata_property('uniquevalues') == 1) {
-                $staticelementnotes[] = get_string('fieldisunique', 'tool_coursefields');
-            }
-            if (count($staticelementnotes) > 0) {
-                $staticelement = $mform->createElement('static', $staticelementname, '', implode('<br />', $staticelementnotes));
-                $mform->insertElementBefore($staticelement, $elementname);
-            }
 
             // Hide the field if "Do not change" or "Clear" is selected.
             $mform->hideIf($elementname, 'customfieldupdate_' . $shortname, 'eq', TOOL_COURSEFIELDS_NONE);
@@ -171,5 +175,82 @@ class set_fields_form extends \moodleform {
 
         // Buttons.
         $this->add_action_buttons(true, get_string('confirm'));
+    }
+
+    /**
+     * Form validation.
+     *
+     * @param array $data Form data
+     * @param array $files Form files
+     * @return array Validation errors
+     */
+    public function validation($data, $files) {
+        $errors = parent::validation($data, $files);
+
+        // Get the custom fields to check required fields.
+        $handler = \core_course\customfield\course_handler::create();
+        $handler->set_parent_context(\context_coursecat::instance($this->_customdata['category']));
+        $editablefields = $handler->get_editable_fields(0);
+
+        // Check each field for required validation.
+        foreach ($editablefields as $field) {
+            $shortname = $field->get('shortname');
+            $fieldtype = $field->get('type');
+
+            // Handle textarea special case.
+            if ($fieldtype == 'textarea') {
+                $shortname .= '_editor';
+            }
+
+            $elementname = 'customfield_' . $shortname;
+            $updatemodename = 'customfieldupdate_' . $shortname;
+
+            // Check if this is a required field.
+            $isrequired = ($field->get_configdata_property('required') == 1);
+            $isunique = ($field->get_configdata_property('uniquevalues') == 1);
+
+            // Only validate if user selected "Overwrite" or "Only if empty" mode.
+            if (isset($data[$updatemodename]) &&
+                ($data[$updatemodename] == TOOL_COURSEFIELDS_ALL || $data[$updatemodename] == TOOL_COURSEFIELDS_EMPTY)) {
+
+                // Get the field value from submitted data.
+                $fieldvalue = isset($data[$elementname]) ? $data[$elementname] : null;
+
+                // Validate required fields.
+                if ($isrequired) {
+                    // Use centralized logic to check if field is empty.
+                    $isempty = \tool_coursefields\set_fields::is_field_value_empty($fieldtype, $fieldvalue);
+
+                    if ($isempty) {
+                        $errors[$elementname] = get_string('fieldrequirederror', 'tool_coursefields', $field->get_formatted_name());
+                    }
+                }
+
+                // Validate unique fields.
+                if ($isunique && !isset($errors[$elementname])) {
+                    // Check if the value is not empty (we only check uniqueness for non-empty values).
+                    $isempty = \tool_coursefields\set_fields::is_field_value_empty($fieldtype, $fieldvalue);
+
+                    if (!$isempty) {
+                        // Use the customfield API's built-in unique validation which checks system-wide.
+                        // Create a temporary data controller instance for validation.
+                        $datacontroller = \core_customfield\data_controller::create(0, null, $field);
+
+                        // Prepare validation data in the format expected by instance_form_validation.
+                        $validationdata = [$elementname => $fieldvalue];
+
+                        // Run the built-in unique validation (checks system-wide in customfield_data table).
+                        $validationerrors = $datacontroller->instance_form_validation($validationdata, []);
+
+                        // Add any errors to our errors array.
+                        if (!empty($validationerrors)) {
+                            $errors = array_merge($errors, $validationerrors);
+                        }
+                    }
+                }
+            }
+        }
+
+        return $errors;
     }
 }

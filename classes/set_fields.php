@@ -50,6 +50,59 @@ class set_fields {
     }
 
     /**
+     * Check if a field value is considered empty based on the field type.
+     *
+     * @param string $fieldtype The field type (text, textarea, date, select, number, etc.).
+     * @param mixed $fieldvalue The field value to check.
+     * @return bool True if the field value is considered empty.
+     */
+    public static function is_field_value_empty($fieldtype, $fieldvalue) {
+        // For text fields: null or empty string after trimming means empty.
+        if ($fieldtype == 'text') {
+            if ($fieldvalue === null) {
+                return true;
+            }
+            if (is_string($fieldvalue)) {
+                return (trim(strip_tags($fieldvalue)) === '');
+            }
+            return false;
+        }
+
+        // For textarea fields: null or empty string after trimming means empty.
+        // Textarea can be either a string or an array with 'text' key.
+        if ($fieldtype == 'textarea') {
+            if ($fieldvalue === null) {
+                return true;
+            }
+            if (is_array($fieldvalue) && isset($fieldvalue['text'])) {
+                return (trim(strip_tags($fieldvalue['text'])) === '');
+            }
+            if (is_string($fieldvalue)) {
+                return (trim(strip_tags($fieldvalue)) === '');
+            }
+            return false;
+        }
+
+        // For date fields: 0 (int) or null means empty.
+        if ($fieldtype == 'date') {
+            return ($fieldvalue === null || $fieldvalue === 0);
+        }
+
+        // For select fields: 0 (int) or null means empty.
+        if ($fieldtype == 'select') {
+            return ($fieldvalue === null || $fieldvalue === 0);
+        }
+
+        // For number fields: null or empty string means empty. 0 is a valid value.
+        if ($fieldtype == 'number') {
+            return ($fieldvalue === null || $fieldvalue === '');
+        }
+
+        // Any other fieldtype.
+        return false;
+    }
+
+    /**
      * Output a trace message, but only if not running in PHPUnit (as PHPUnit would assess the output as problem).
      *
      * @param string $message The message to output
@@ -151,51 +204,17 @@ class set_fields {
                                 // Trace.
                                 self::trace("... ... Field type '{$fieldtype}' does not support 'Only if empty' mode - skipping.");
                                 $fieldhasvalue = true;
-
-                            // For date fields.
-                            } else if ($fieldtype == 'date') {
-                                // 0 (int) or null means empty.
-                                if ($fieldvalue !== null && $fieldvalue !== 0) {
-                                    // Trace.
-                                    self::trace("... ... Date field '{$fieldname}' already has a value - skipping.");
-                                    $fieldhasvalue = true;
-                                } else {
-                                    // Trace.
-                                    self::trace("... ... Date field '{$fieldname}' is empty - will update.");
-                                }
-
-                            // For select fields.
-                            } else if ($fieldtype == 'select') {
-                                // 0 (int) or null means empty.
-                                if ($fieldvalue !== null && $fieldvalue !== 0) {
-                                    // Trace.
-                                    self::trace("... ... Select field '{$fieldname}' already has a value - skipping.");
-                                    $fieldhasvalue = true;
-                                } else {
-                                    // Trace.
-                                    self::trace("... ... Select field '{$fieldname}' is empty - will update.");
-                                }
-                            // For number fields.
-                            } else if ($fieldtype == 'number') {
-                                // For number fields, null or empty string means empty. 0 is a valid value.
-                                if ($fieldvalue !== null && $fieldvalue !== '') {
-                                    // Trace.
-                                    self::trace("... ... Number field '{$fieldname}' already has a value - skipping.");
-                                    $fieldhasvalue = true;
-                                } else {
-                                    // Trace.
-                                    self::trace("... ... Number field '{$fieldname}' is empty - will update.");
-                                }
-                                // For all other supported fields.
                             } else {
-                                // Null or empty string after trimming means empty.
-                                if ($fieldvalue !== null && trim(strip_tags($fieldvalue)) !== '') {
+                                // Use centralized logic to check if field is empty.
+                                $isempty = self::is_field_value_empty($fieldtype, $fieldvalue);
+
+                                if (!$isempty) {
                                     // Trace.
-                                    self::trace("... ... Form field '{$fieldname}' already has a value - skipping.");
+                                    self::trace("... ... Field '{$fieldname}' already has a value - skipping.");
                                     $fieldhasvalue = true;
                                 } else {
                                     // Trace.
-                                    self::trace("... ... Form field '{$fieldname}' is empty - will update.");
+                                    self::trace("... ... Field '{$fieldname}' is empty - will update.");
                                 }
                             }
 

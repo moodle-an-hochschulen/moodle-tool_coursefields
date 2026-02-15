@@ -344,7 +344,7 @@ Feature: The course fields tool allows a manager to set custom course fields in 
     And I log out
 
   @javascript
-  Scenario: Manager does overwrite a unique field with the same string without problems
+  Scenario: Manager cannot bulk-set unique fields (radio buttons are disabled)
     Given the following "custom fields" exist:
       | name    | category          | type     | shortname | description | configdata           |
       | Field 7 | Category for test | text     | f7        | d7          | {"uniquevalues":"1"} |
@@ -352,24 +352,30 @@ Feature: The course fields tool allows a manager to set custom course fields in 
     And I am on course index
     And I follow "Category A"
     And I navigate to "Set course fields" in current page administration
-    And I click on "Overwrite the field for all courses" "radio" in the "#fgroup_id_customfieldgroup_f7" "css_element"
-    And I set the following fields to these values:
-      | Field 7 | nonunique |
-    And I press "Confirm"
-    And I should see "An adhoc task has been queued"
-    And I run all adhoc tasks
-    And I am on "Course 1" course homepage
-    And I navigate to "Settings" in current page administration
-    Then the following fields match these values:
-      | Field 7 | nonunique |
-    And I am on "Course 2" course homepage
-    And I navigate to "Settings" in current page administration
-    Then the following fields match these values:
-      | Field 7 | nonunique |
+    Then the "id_customfieldupdate_f7_none" "radio" should be enabled
+    And the "id_customfieldupdate_f7_all" "radio" should be disabled
+    And the "id_customfieldupdate_f7_empty" "radio" should be disabled
+    # Basically, we should check if we see this string within the label:has(#id_customfieldupdate_f7_all) element.
+    # But Selenium seems not to support :has() selector.
+    And I should see "Not possible for unique fields"
     And I log out
 
   @javascript
-  Scenario: Manager does overwrite a required field with an empty value without problems
+  Scenario: Checkbox fields do not support "Only if empty" mode (radio button is disabled)
+    When I log in as "admin"
+    And I am on course index
+    And I follow "Category A"
+    And I navigate to "Set course fields" in current page administration
+    Then the "id_customfieldupdate_f3_none" "radio" should be enabled
+    And the "id_customfieldupdate_f3_all" "radio" should be enabled
+    And the "id_customfieldupdate_f3_empty" "radio" should be disabled
+    # Basically, we should check if we see this string within the label:has(#id_customfieldupdate_f3_empty) element.
+    # But Selenium seems not to support :has() selector.
+    And I should see "Not possible for this field type"
+    And I log out
+
+  @javascript
+  Scenario: Manager cannot set a required field to an empty value
     Given the following "custom fields" exist:
       | name    | category          | type     | shortname | description | configdata       |
       | Field 7 | Category for test | text     | f7        | d7          | {"required":"1"} |
@@ -377,14 +383,13 @@ Feature: The course fields tool allows a manager to set custom course fields in 
     And I am on course index
     And I follow "Category A"
     And I navigate to "Set course fields" in current page administration
+    Then the "id_customfieldupdate_f7_none" "radio" should be enabled
+    And the "id_customfieldupdate_f7_all" "radio" should be enabled
+    And the "id_customfieldupdate_f7_empty" "radio" should be enabled
     And I click on "Overwrite the field for all courses" "radio" in the "#fgroup_id_customfieldgroup_f7" "css_element"
     And I set the following fields to these values:
       | Field 7 | |
     And I press "Confirm"
-    And I should see "An adhoc task has been queued"
-    And I run all adhoc tasks
-    And I am on "Course 1" course homepage
-    And I navigate to "Settings" in current page administration
-    Then the following fields match these values:
-      | Field 7 | |
+    Then I should see "is required and cannot be empty" in the "#id_error_customfield_f7" "css_element"
+    And I should not see "An adhoc task has been queued"
     And I log out

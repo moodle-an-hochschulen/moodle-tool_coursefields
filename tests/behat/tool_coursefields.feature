@@ -86,7 +86,6 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | id_customfield_f4_enabled | 0 |
       | Field 5                   |   |
       | Field 6                   |   |
-    And I log out
 
   @javascript
   Scenario: Manager does overwrite existing field values in the given category and subcategory, leaving other categories untouched
@@ -188,7 +187,91 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | id_customfield_f4_year    | 2017         |
       | Field 5                   | a            |
       | Field 6                   | 10           |
-    And I log out
+
+  @javascript
+  Scenario: Manager does clear existing field values in the given category and subcategory, leaving other categories untouched
+    When I log in as "admin"
+    And I am on "Course 1" course homepage
+    And I navigate to "Settings" in current page administration
+    And I set the following fields to these values:
+      | Field 1                   | testcontent0 |
+      | Field 2                   | testcontent0 |
+      | Field 3                   | 0            |
+      | id_customfield_f4_enabled | 1            |
+      | id_customfield_f4_day     | 2            |
+      | id_customfield_f4_month   | February     |
+      | id_customfield_f4_year    | 2017         |
+      | Field 5                   | a            |
+      | Field 6                   | 10           |
+    And I press "Save and display"
+    And I am on "Course 2" course homepage
+    And I navigate to "Settings" in current page administration
+    And I set the following fields to these values:
+      | Field 1                   | testcontent0 |
+      | Field 2                   | testcontent0 |
+      | Field 3                   | 0            |
+      | id_customfield_f4_enabled | 1            |
+      | id_customfield_f4_day     | 2            |
+      | id_customfield_f4_month   | February     |
+      | id_customfield_f4_year    | 2017         |
+      | Field 5                   | a            |
+      | Field 6                   | 10           |
+    And I press "Save and display"
+    And I am on "Course 3" course homepage
+    And I navigate to "Settings" in current page administration
+    And I set the following fields to these values:
+      | Field 1                   | testcontent0 |
+      | Field 2                   | testcontent0 |
+      | Field 3                   | 0            |
+      | id_customfield_f4_enabled | 1            |
+      | id_customfield_f4_day     | 2            |
+      | id_customfield_f4_month   | February     |
+      | id_customfield_f4_year    | 2017         |
+      | Field 5                   | a            |
+      | Field 6                   | 10           |
+    And I press "Save and display"
+    And I am on course index
+    And I follow "Category A"
+    And I navigate to "Set course fields" in current page administration
+    And I click on "Clear the field for all courses" "radio" in the "#fgroup_id_customfieldgroup_f1" "css_element"
+    And I click on "Clear the field for all courses" "radio" in the "#fgroup_id_customfieldgroup_f2_editor" "css_element"
+    And I click on "Clear the field for all courses" "radio" in the "#fgroup_id_customfieldgroup_f3" "css_element"
+    And I click on "Clear the field for all courses" "radio" in the "#fgroup_id_customfieldgroup_f4" "css_element"
+    And I click on "Clear the field for all courses" "radio" in the "#fgroup_id_customfieldgroup_f5" "css_element"
+    And I click on "Clear the field for all courses" "radio" in the "#fgroup_id_customfieldgroup_f6" "css_element"
+    And I press "Confirm"
+    And I should see "An adhoc task has been queued"
+    And I run all adhoc tasks
+    And I am on "Course 1" course homepage
+    And I navigate to "Settings" in current page administration
+    Then the following fields match these values:
+      | Field 1                   |   |
+      | Field 2                   |   |
+      | Field 3                   | 0 |
+      | id_customfield_f4_enabled | 0 |
+      | Field 5                   |   |
+      | Field 6                   |   |
+    And I am on "Course 2" course homepage
+    And I navigate to "Settings" in current page administration
+    And the following fields match these values:
+      | Field 1                   |   |
+      | Field 2                   |   |
+      | Field 3                   | 0 |
+      | id_customfield_f4_enabled | 0 |
+      | Field 5                   |   |
+      | Field 6                   |   |
+    And I am on "Course 3" course homepage
+    And I navigate to "Settings" in current page administration
+    And the following fields match these values:
+      | Field 1                   | testcontent0 |
+      | Field 2                   | testcontent0 |
+      | Field 3                   | 0            |
+      | id_customfield_f4_enabled | 1            |
+      | id_customfield_f4_day     | 2            |
+      | id_customfield_f4_month   | February     |
+      | id_customfield_f4_year    | 2017         |
+      | Field 5                   | a            |
+      | Field 6                   | 10           |
 
   @javascript
   Scenario: Manager does set only empty fields (except checkbox fields) in the given category and subcategory, leaving other categories untouched
@@ -255,7 +338,6 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | id_customfield_f4_enabled | 0 |
       | Field 5                   |   |
       | Field 6                   |   |
-    And I log out
 
   @javascript
   Scenario: Manager does overwrite only one existing field, leaving the other fields untouched
@@ -299,7 +381,6 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | id_customfield_f4_year    | 2017         |
       | Field 5                   | a            |
       | Field 6                   | 10           |
-    And I log out
 
   @javascript
   Scenario: Manager does not overwrite any fields, thus leaving all existing values untouched
@@ -341,7 +422,6 @@ Feature: The course fields tool allows a manager to set custom course fields in 
       | id_customfield_f4_year    | 2017         |
       | Field 5                   | a            |
       | Field 6                   | 10           |
-    And I log out
 
   @javascript
   Scenario: Manager cannot bulk-set unique fields (radio buttons are disabled)
@@ -354,14 +434,34 @@ Feature: The course fields tool allows a manager to set custom course fields in 
     And I navigate to "Set course fields" in current page administration
     Then the "id_customfieldupdate_f7_none" "radio" should be enabled
     And the "id_customfieldupdate_f7_all" "radio" should be disabled
+    And the "id_customfieldupdate_f7_clear" "radio" should be enabled
     And the "id_customfieldupdate_f7_empty" "radio" should be disabled
     # Basically, we should check if we see this string within the label:has(#id_customfieldupdate_f7_all) element.
     # But Selenium seems not to support :has() selector.
     And I should see "Not possible for unique fields"
-    And I log out
 
   @javascript
-  Scenario: Checkbox fields do not support "Only if empty" mode (radio button is disabled)
+  Scenario: Manager cannot clear required fields (radio button is disabled)
+    Given the following "custom fields" exist:
+      | name    | category          | type     | shortname | description | configdata       |
+      | Field 7 | Category for test | text     | f7        | d7          | {"required":"1"} |
+    When I log in as "admin"
+    And I am on course index
+    And I follow "Category A"
+    And I navigate to "Set course fields" in current page administration
+    Then the "id_customfieldupdate_f7_none" "radio" should be enabled
+    And the "id_customfieldupdate_f7_all" "radio" should be enabled
+    And the "id_customfieldupdate_f7_clear" "radio" should be disabled
+    And the "id_customfieldupdate_f7_empty" "radio" should be enabled
+    # Basically, we should check if we see this string within the label:has(#id_customfieldupdate_f7_clear) element.
+    # But Selenium seems not to support :has() selector.
+    And I should see "Not possible for required fields"
+
+  @javascript
+  Scenario: Checkbox and file fields do not support "Only if empty" mode (radio button is disabled)
+    Given the following "custom fields" exist:
+      | name    | category          | type | shortname | description |
+      | Field 7 | Category for test | file | f7        | d7          |
     When I log in as "admin"
     And I am on course index
     And I follow "Category A"
@@ -369,13 +469,32 @@ Feature: The course fields tool allows a manager to set custom course fields in 
     Then the "id_customfieldupdate_f3_none" "radio" should be enabled
     And the "id_customfieldupdate_f3_all" "radio" should be enabled
     And the "id_customfieldupdate_f3_empty" "radio" should be disabled
+    And the "id_customfieldupdate_f7_none" "radio" should be enabled
+    And the "id_customfieldupdate_f7_all" "radio" should be enabled
+    And the "id_customfieldupdate_f7_empty" "radio" should be disabled
     # Basically, we should check if we see this string within the label:has(#id_customfieldupdate_f3_empty) element.
     # But Selenium seems not to support :has() selector.
     And I should see "Not possible for this field type"
-    And I log out
 
   @javascript
-  Scenario: Manager cannot set a required field to an empty value
+  Scenario: File fields do not support "Clear" mode (radio button is disabled)
+    Given the following "custom fields" exist:
+      | name    | category          | type | shortname | description |
+      | Field 7 | Category for test | file | f7        | d7          |
+    When I log in as "admin"
+    And I am on course index
+    And I follow "Category A"
+    And I navigate to "Set course fields" in current page administration
+    Then the "id_customfieldupdate_f7_none" "radio" should be enabled
+    And the "id_customfieldupdate_f7_all" "radio" should be enabled
+    And the "id_customfieldupdate_f7_clear" "radio" should be disabled
+    And the "id_customfieldupdate_f7_empty" "radio" should be disabled
+    # Basically, we should check if we see this string within the label:has(#id_customfieldupdate_f7_clear) element.
+    # But Selenium seems not to support :has() selector.
+    And I should see "Not possible for this field type"
+
+  @javascript
+  Scenario: Manager cannot set a required field to an empty value (form validation)
     Given the following "custom fields" exist:
       | name    | category          | type     | shortname | description | configdata       |
       | Field 7 | Category for test | text     | f7        | d7          | {"required":"1"} |
@@ -392,4 +511,3 @@ Feature: The course fields tool allows a manager to set custom course fields in 
     And I press "Confirm"
     Then I should see "is required and cannot be empty" in the "#id_error_customfield_f7" "css_element"
     And I should not see "An adhoc task has been queued"
-    And I log out

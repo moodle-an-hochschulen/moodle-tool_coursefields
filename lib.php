@@ -27,6 +27,7 @@
 define('TOOL_COURSEFIELDS_NONE', 'none');
 define('TOOL_COURSEFIELDS_ALL', 'all');
 define('TOOL_COURSEFIELDS_EMPTY', 'empty');
+define('TOOL_COURSEFIELDS_CLEAR', 'clear');
 
 /**
  * Extends the category navigation to show the course fields tool.

@@ -45,7 +45,10 @@ When you use the 'Set course fields' page to update custom course fields for mul
 If you select this option, the field will not be touched at all after you submit the form.
 
 * Overwrite the field for all courses:\
-If you select this option, the field will be overwritten with the given value, regardless of its previous value. This option can also be used to clear the field for all courses, simply by overwriting it with an empty value.
+If you select this option, the field will be overwritten with the given value, regardless of its previous value.
+
+* Clear the field for all courses:\
+If you select this option, the field will be cleared (set to empty). Please note that this mode is only available for selected field types from Moodle core as the empty field value cannot be determined for sure for third-party field types.
 
 * Only set the field for courses where the field is empty:\
 If you select this option, the field will be only be set to the given value if it does not contain a non-empty value yet. Please note that this mode is only available for selected field types from Moodle core as the check if a field is really empty cannot be generalized.

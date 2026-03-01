@@ -6,6 +6,7 @@ Changes
 
 ### Unreleased
 
+* 2026-02-15 - Improvement: Add option to clear existing field values.
 * 2026-02-15 - Improvement: Remove the possibility to overwrite unique fields and to clear required fields for the sake of error prevention.
 * 2026-02-15 - Improvement: Add mtrace messages to the ad-hoc task output.
 * 2026-02-15 - Improvement: Add options to only update empty fields, resolves #5

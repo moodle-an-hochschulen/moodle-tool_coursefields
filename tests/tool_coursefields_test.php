@@ -26,6 +26,8 @@ namespace tool_coursefields;
 
 use core_course\customfield\course_handler;
 
+defined('MOODLE_INTERNAL') || die();
+
 require_once(__DIR__ . '/../lib.php');
 
 /**
@@ -34,13 +36,14 @@ require_once(__DIR__ . '/../lib.php');
  * @package    tool_coursefields
  * @copyright  2026 Alexander Bias <bias@alexanderbias.de>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers     \tool_coursefields\set_fields
  */
 final class tool_coursefields_test extends \advanced_testcase {
-
     /**
      * Setup testcase.
      */
     protected function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest();
     }
 
@@ -99,7 +102,7 @@ final class tool_coursefields_test extends \advanced_testcase {
         ];
 
         // Action modes.
-        $modes = [TOOL_COURSEFIELDS_NONE, TOOL_COURSEFIELDS_EMPTY, TOOL_COURSEFIELDS_ALL];
+        $modes = [TOOL_COURSEFIELDS_NONE, TOOL_COURSEFIELDS_EMPTY, TOOL_COURSEFIELDS_CLEAR, TOOL_COURSEFIELDS_ALL];
 
         // Field states.
         $states = ['empty', 'filled'];
@@ -114,13 +117,17 @@ final class tool_coursefields_test extends \advanced_testcase {
                     // Never update if mode is TOOL_COURSEFIELDS_NONE.
                     if ($mode === TOOL_COURSEFIELDS_NONE) {
                         $shouldupdate = false;
-                    }
-                    // Always update if mode is TOOL_COURSEFIELDS_ALL.
-                    else if ($mode === TOOL_COURSEFIELDS_ALL) {
+
+                        // Always update if mode is TOOL_COURSEFIELDS_ALL.
+                    } else if ($mode === TOOL_COURSEFIELDS_ALL) {
                         $shouldupdate = true;
-                    }
-                    // For TOOL_COURSEFIELDS_EMPTY mode: only update if field is empty.
-                    else if ($mode === TOOL_COURSEFIELDS_EMPTY && $state === 'empty') {
+
+                        // Always update if mode is TOOL_COURSEFIELDS_CLEAR.
+                    } else if ($mode === TOOL_COURSEFIELDS_CLEAR) {
+                        $shouldupdate = true;
+
+                        // For TOOL_COURSEFIELDS_EMPTY mode: only update if field is empty.
+                    } else if ($mode === TOOL_COURSEFIELDS_EMPTY && $state === 'empty') {
                         // TOOL_COURSEFIELDS_EMPTY mode is not supported for checkbox.
                         if (\tool_coursefields\set_fields::supports_empty_mode($fieldtype)) {
                             $shouldupdate = true;
@@ -130,7 +137,7 @@ final class tool_coursefields_test extends \advanced_testcase {
                     }
 
                     // Build test case name.
-                   $name = "{$fieldtype}_{$mode}_{$state}";
+                    $name = "{$fieldtype}_{$mode}_{$state}";
 
                     // Add test case.
                     $testcases[$name] = [
@@ -236,10 +243,16 @@ final class tool_coursefields_test extends \advanced_testcase {
 
         // Determine expected value.
         if ($shouldupdate) {
-            $expectedvalue = $fielddata['new'];
-            if ($fieldtype === 'textarea') {
-                // For textarea, the value is stored as text only.
-                $expectedvalue = $fielddata['new']['text'];
+            // For CLEAR mode, expected value is always empty.
+            if ($mode === TOOL_COURSEFIELDS_CLEAR) {
+                $expectedvalue = $fielddata['empty'];
+            } else {
+                // For other modes (ALL, EMPTY), expected value is the new value.
+                $expectedvalue = $fielddata['new'];
+                if ($fieldtype === 'textarea') {
+                    // For textarea, the value is stored as text only.
+                    $expectedvalue = $fielddata['new']['text'];
+                }
             }
         } else {
             // Field should not be updated.
@@ -280,6 +293,22 @@ final class tool_coursefields_test extends \advanced_testcase {
     }
 
     /**
+     * Test that supports_clear_mode returns correct values for each field type.
+     */
+    public function test_supports_clear_mode(): void {
+        // Supported types.
+        $this->assertTrue(set_fields::supports_clear_mode('text'));
+        $this->assertTrue(set_fields::supports_clear_mode('textarea'));
+        $this->assertTrue(set_fields::supports_clear_mode('date'));
+        $this->assertTrue(set_fields::supports_clear_mode('select'));
+        $this->assertTrue(set_fields::supports_clear_mode('number'));
+        $this->assertTrue(set_fields::supports_clear_mode('checkbox'));
+
+        // Unsupported types.
+        $this->assertFalse(set_fields::supports_clear_mode('unsupportedtype'));
+    }
+
+    /**
      * Test is_field_value_empty function for all field types.
      *
      * Tests the centralized logic that determines if a field value is empty.
@@ -295,10 +324,22 @@ final class tool_coursefields_test extends \advanced_testcase {
 
         // Textarea fields (array format).
         $this->assertTrue(set_fields::is_field_value_empty('textarea', null), 'Textarea: null should be empty');
-        $this->assertTrue(set_fields::is_field_value_empty('textarea', ['text' => '']), 'Textarea: empty text should be empty');
-        $this->assertTrue(set_fields::is_field_value_empty('textarea', ['text' => '   ']), 'Textarea: whitespace should be empty');
-        $this->assertTrue(set_fields::is_field_value_empty('textarea', ['text' => '<p></p>']), 'Textarea: empty HTML should be empty');
-        $this->assertFalse(set_fields::is_field_value_empty('textarea', ['text' => 'content']), 'Textarea: "content" should not be empty');
+        $this->assertTrue(
+            set_fields::is_field_value_empty('textarea', ['text' => '']),
+            'Textarea: empty text should be empty'
+        );
+        $this->assertTrue(
+            set_fields::is_field_value_empty('textarea', ['text' => '   ']),
+            'Textarea: whitespace should be empty'
+        );
+        $this->assertTrue(
+            set_fields::is_field_value_empty('textarea', ['text' => '<p></p>']),
+            'Textarea: empty HTML should be empty'
+        );
+        $this->assertFalse(
+            set_fields::is_field_value_empty('textarea', ['text' => 'content']),
+            'Textarea: "content" should not be empty'
+        );
 
         // Date fields.
         $this->assertTrue(set_fields::is_field_value_empty('date', null), 'Date: null should be empty');
@@ -386,13 +427,21 @@ final class tool_coursefields_test extends \advanced_testcase {
         // Test 2: Required text field with non-empty value should pass validation.
         $data['customfield_requiredfield'] = 'nonemptyvalue';
         $errors = $form->validation($data, []);
-        $this->assertArrayNotHasKey('customfield_requiredfield', $errors, 'Validation should pass for non-empty required text field');
+        $this->assertArrayNotHasKey(
+            'customfield_requiredfield',
+            $errors,
+            'Validation should pass for non-empty required text field'
+        );
 
         // Test 3: Required text field with mode "Do not change" should pass validation (even if empty).
         $data['customfield_requiredfield'] = '';
         $data['customfieldupdate_requiredfield'] = TOOL_COURSEFIELDS_NONE;
         $errors = $form->validation($data, []);
-        $this->assertArrayNotHasKey('customfield_requiredfield', $errors, 'Validation should pass when mode is "Do not change"');
+        $this->assertArrayNotHasKey(
+            'customfield_requiredfield',
+            $errors,
+            'Validation should pass when mode is "Do not change"'
+        );
 
         // Test 4: Non-required field with empty value should pass validation.
         $data['customfield_normalfield'] = '';
@@ -412,20 +461,29 @@ final class tool_coursefields_test extends \advanced_testcase {
             'customfieldupdate_requiredtextarea_editor' => TOOL_COURSEFIELDS_ALL,
         ];
         $errors = $form->validation($data, []);
-        $this->assertArrayHasKey('customfield_requiredtextarea_editor', $errors,
-            'Validation should fail for empty required textarea');
+        $this->assertArrayHasKey(
+            'customfield_requiredtextarea_editor',
+            $errors,
+            'Validation should fail for empty required textarea'
+        );
 
         // Test 6: Required textarea with non-empty text should pass validation.
         $data['customfield_requiredtextarea_editor']['text'] = 'Some content';
         $errors = $form->validation($data, []);
-        $this->assertArrayNotHasKey('customfield_requiredtextarea_editor', $errors,
-            'Validation should pass for non-empty required textarea');
+        $this->assertArrayNotHasKey(
+            'customfield_requiredtextarea_editor',
+            $errors,
+            'Validation should pass for non-empty required textarea'
+        );
 
         // Test 7: Required textarea with only whitespace should fail validation.
         $data['customfield_requiredtextarea_editor']['text'] = '   ';
         $errors = $form->validation($data, []);
-        $this->assertArrayHasKey('customfield_requiredtextarea_editor', $errors,
-            'Validation should fail for whitespace-only required textarea');
+        $this->assertArrayHasKey(
+            'customfield_requiredtextarea_editor',
+            $errors,
+            'Validation should fail for whitespace-only required textarea'
+        );
     }
 
     /**
@@ -476,8 +534,11 @@ final class tool_coursefields_test extends \advanced_testcase {
             'customfieldupdate_uniquefield' => TOOL_COURSEFIELDS_ALL,
         ];
         $errors = $form->validation($data, []);
-        $this->assertArrayHasKey('customfield_uniquefield', $errors,
-            'Validation should fail when trying to set a unique field with a duplicate value in same category');
+        $this->assertArrayHasKey(
+            'customfield_uniquefield',
+            $errors,
+            'Validation should fail when trying to set a unique field with a duplicate value in same category'
+        );
         $this->assertStringContainsString('already used', strtolower($errors['customfield_uniquefield']));
 
         // Test 2: Trying to set a unique field with an existing value in different category should also fail (system-wide check).
@@ -488,28 +549,41 @@ final class tool_coursefields_test extends \advanced_testcase {
             'customfieldupdate_uniquefield' => TOOL_COURSEFIELDS_ALL,
         ];
         $errors2 = $form2->validation($data2, []);
-        $this->assertArrayHasKey('customfield_uniquefield', $errors2,
-            'Validation should fail when trying to set a unique field with a duplicate value in different category (system-wide check)');
+        $this->assertArrayHasKey(
+            'customfield_uniquefield',
+            $errors2,
+            'Validation should fail when trying to set a unique field with a duplicate value '
+            . 'in different category (system-wide check)'
+        );
         $this->assertStringContainsString('already used', strtolower($errors2['customfield_uniquefield']));
 
         // Test 3: Setting a unique field with a new value should pass validation.
         $data['customfield_uniquefield'] = 'newuniquevalue';
         $errors3 = $form->validation($data, []);
-        $this->assertArrayNotHasKey('customfield_uniquefield', $errors3,
-            'Validation should pass when setting a unique field with a unique value');
+        $this->assertArrayNotHasKey(
+            'customfield_uniquefield',
+            $errors3,
+            'Validation should pass when setting a unique field with a unique value'
+        );
 
         // Test 4: Setting a unique field with mode "Do not change" should pass validation (even if duplicate).
         $data['customfield_uniquefield'] = 'existingvalue';
         $data['customfieldupdate_uniquefield'] = TOOL_COURSEFIELDS_NONE;
         $errors4 = $form->validation($data, []);
-        $this->assertArrayNotHasKey('customfield_uniquefield', $errors4,
-            'Validation should pass when mode is "Do not change" even with duplicate value');
+        $this->assertArrayNotHasKey(
+            'customfield_uniquefield',
+            $errors4,
+            'Validation should pass when mode is "Do not change" even with duplicate value'
+        );
 
         // Test 5: Setting a unique field with an empty value should pass validation (uniqueness is only for non-empty values).
         $data['customfield_uniquefield'] = '';
         $data['customfieldupdate_uniquefield'] = TOOL_COURSEFIELDS_ALL;
         $errors5 = $form->validation($data, []);
-        $this->assertArrayNotHasKey('customfield_uniquefield', $errors5,
-            'Validation should pass when setting a unique field with an empty value');
+        $this->assertArrayNotHasKey(
+            'customfield_uniquefield',
+            $errors5,
+            'Validation should pass when setting a unique field with an empty value'
+        );
     }
 }

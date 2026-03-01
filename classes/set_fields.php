@@ -50,6 +50,16 @@ class set_fields {
     }
 
     /**
+     * Check if a field type supports "Clear" mode.
+     *
+     * @param string $fieldtype The field type to check
+     * @return bool True if the field type supports "Clear" mode
+     */
+    public static function supports_clear_mode($fieldtype) {
+        return in_array($fieldtype, ['text', 'textarea', 'date', 'select', 'number', 'checkbox']);
+    }
+
+    /**
      * Check if a field value is considered empty based on the field type.
      *
      * @param string $fieldtype The field type (text, textarea, date, select, number, etc.).
@@ -135,120 +145,155 @@ class set_fields {
         // Trace.
         self::trace("Now processing: Course with ID {$course->id}.");
 
-        // Iterate over all submitted fields.
-        foreach ($fields as $key => $value) {
-            // Do only if we are really dealing with a custom field now.
-            if (substr($key, 0, 12) == 'customfield_') {
-                // At least customfield_textarea values are not strings but associative arrays.
-                // When customfield_textarea field ist set by /course/edit.php, this works fine.
-                // However, as the field value is json_encoded and json_decoded and as this,
-                // due to the nature of json_encoding transforms the associative array into an
-                // object, we have to handle this case here explicitely.
-                if (is_object($value)) {
-                    $value = (array) $value;
-                }
+        // Iterate over all custom course fields that exist in Moodle.
+        // This approach is independent of whether fields are hidden in the form or not.
+        foreach ($customfields as $data) {
+            // Get field information.
+            $fieldtype = $data->get_field()->get('type');
+            $fieldshortname = $data->get_field()->get('shortname');
+            $isunique = ($data->get_field()->get_configdata_property('uniquevalues') == 1);
+            $isrequired = ($data->get_field()->get_configdata_property('required') == 1);
 
-                // Get the field name.
-                $fieldname = substr($key, 12);
+            // For textarea fields, the form uses _editor suffix.
+            $formfieldname = ($fieldtype === 'textarea') ? $fieldshortname . '_editor' : $fieldshortname;
 
+            // Trace.
+            self::trace("... Now processing: Custom field '{$fieldshortname}' (type: {$fieldtype}).");
+
+            // Check if there's an update mode set for this field in the submitted form data.
+            $updatemodekey = 'customfieldupdate_' . $formfieldname;
+            if (!isset($fields->{$updatemodekey})) {
                 // Trace.
-                self::trace("... Now processing: Form field '{$fieldname}'.");
-
-                // If this field does not have an update mode set, skip it.
-                if (!isset($fields->{'customfieldupdate_' . $fieldname})) {
-                    // Trace.
-                    self::trace("... ... No update mode set for field '{$fieldname}' at all. This should not happen - skipping.");
-
-                    continue;
-                }
-
-                // Get the update mode.
-                $updatemode = $fields->{'customfieldupdate_' . $fieldname};
-
-                // Skip if update mode is "none" - don't change this field at all.
-                if ($updatemode == TOOL_COURSEFIELDS_NONE) {
-                    // Trace.
-                    self::trace("... ... Update mode: None - skipping.");
-
-                    continue;
-                }
-
-                // If update mode is "empty" and the field already has a value, skip it as well.
-                if ($updatemode == TOOL_COURSEFIELDS_EMPTY) {
-                    // Trace.
-                    self::trace("... ... Update mode: Only if empty.");
-
-                    // Initlialize a flag which indicates that the field already has a value.
-                    $fieldhasvalue = false;
-
-                    // Iterate over all custom fields data.
-                    foreach ($customfields as $data) {
-                        // Get field type.
-                        $fieldtype = $data->get_field()->get('type');
-
-                        // If we are looking at the correct field now (i.e. the one which we want to update).
-                        // Note that the textarea field needs a special check here.
-                        if (
-                            $data->get_field()->get('shortname') === $fieldname ||
-                                $fieldtype == 'textarea' && $data->get_field()->get('shortname') . '_editor' === $fieldname
-                        ) {
-                            // Get field value.
-                            $fieldvalue = $data->get_value();
-
-                            // Debug: Log the field value and its type.
-                            self::trace("... ... Current field value: " . var_export($fieldvalue, true) .
-                                    " (type: " . gettype($fieldvalue) . ")");
-
-                            // For fields of unsupported types: Always skip it as this mode should have been never set in the GUI.
-                            if (\tool_coursefields\set_fields::supports_empty_mode($fieldtype) == false) {
-                                // Trace.
-                                self::trace("... ... Field type '{$fieldtype}' does not support 'Only if empty' mode - skipping.");
-                                $fieldhasvalue = true;
-                            } else {
-                                // Use centralized logic to check if field is empty.
-                                $isempty = self::is_field_value_empty($fieldtype, $fieldvalue);
-
-                                if (!$isempty) {
-                                    // Trace.
-                                    self::trace("... ... Field '{$fieldname}' already has a value - skipping.");
-                                    $fieldhasvalue = true;
-                                } else {
-                                    // Trace.
-                                    self::trace("... ... Field '{$fieldname}' is empty - will update.");
-                                }
-                            }
-
-                            break;
-                        }
-                    }
-
-                    // Skip this field if it already has a value.
-                    if ($fieldhasvalue) {
-                        continue;
-                    }
-                }
-
-                // If update mode is "all".
-                if ($updatemode == TOOL_COURSEFIELDS_ALL) {
-                    // Trace.
-                    self::trace("... ... Update mode: Always.");
-                }
-
-                // Trace.
-                if (is_array($value)) {
-                    if (isset($value['text'])) {
-                        $valueformtrace = mb_strimwidth($value['text'], 0, 50, "...");
-                    } else {
-                        $valueformtrace = json_encode($value);
-                    }
-                } else {
-                    $valueformtrace = $value;
-                }
-                self::trace("... ... Setting field to the given new value: {$valueformtrace}");
-
-                // Set the field value in the course record to be stored later.
-                $record->{$key} = $value;
+                self::trace("... ... No update mode set for this field - skipping.");
+                continue;
             }
+
+            // Get the update mode.
+            $updatemode = $fields->{$updatemodekey};
+
+            // Get the field value key.
+            $fieldvaluekey = 'customfield_' . $formfieldname;
+
+            // Get the submitted value (will be null if field was hidden via hideIf).
+            $value = isset($fields->{$fieldvaluekey}) ? $fields->{$fieldvaluekey} : null;
+
+            // At least customfield_textarea values are not strings but associative arrays.
+            // When customfield_textarea field ist set by /course/edit.php, this works fine.
+            // However, as the field value is json_encoded and json_decoded and as this,
+            // due to the nature of json_encoding transforms the associative array into an
+            // object, we have to handle this case here explicitely.
+            if (is_object($value)) {
+                $value = (array) $value;
+            }
+
+            // Skip if update mode is "none" - don't change this field at all.
+            if ($updatemode == TOOL_COURSEFIELDS_NONE) {
+                // Trace.
+                self::trace("... ... Update mode: None - skipping.");
+
+                continue;
+            }
+
+            // If update mode is "empty" and the field already has a value, skip it as well.
+            if ($updatemode == TOOL_COURSEFIELDS_EMPTY) {
+                // Trace.
+                self::trace("... ... Update mode: Only if empty.");
+
+                // Safety net: For unique fields, EMPTY mode should never have been set in the GUI.
+                if ($isunique) {
+                    // Trace.
+                    self::trace("... ... Field is unique - 'Only if empty' mode not allowed - skipping.");
+                    continue;
+                }
+
+                // Get current field value from database.
+                $currentfieldvalue = $data->get_value();
+
+                // Debug: Log the field value and its type.
+                self::trace("... ... Current field value: " . var_export($currentfieldvalue, true) .
+                        " (type: " . gettype($currentfieldvalue) . ")");
+
+                // For fields of unsupported types: Always skip it as this mode should have been never set in the GUI.
+                if (self::supports_empty_mode($fieldtype) == false) {
+                    // Trace.
+                    self::trace("... ... Field type '{$fieldtype}' does not support 'Only if empty' mode - skipping.");
+                    continue;
+                }
+
+                // Use centralized logic to check if field is empty.
+                $isempty = self::is_field_value_empty($fieldtype, $currentfieldvalue);
+
+                if (!$isempty) {
+                    // Trace.
+                    self::trace("... ... Field '{$fieldshortname}' already has a value - skipping.");
+                    continue;
+                } else {
+                    // Trace.
+                    self::trace("... ... Field '{$fieldshortname}' is empty - will update.");
+                }
+            }
+
+            // If update mode is "clear" - set field to empty value.
+            if ($updatemode == TOOL_COURSEFIELDS_CLEAR) {
+                // Trace.
+                self::trace("... ... Update mode: Clear field.");
+
+                // Safety net: For required fields, CLEAR mode should never have been set in the GUI.
+                if ($isrequired) {
+                    // Trace.
+                    self::trace("... ... Field is required - 'Clear field' mode not allowed - skipping.");
+                    continue;
+                }
+
+                // For fields of unsupported types: Always skip it as this mode should have been never set in the GUI.
+                if (self::supports_clear_mode($fieldtype) == false) {
+                    // Trace.
+                    self::trace("... ... Field type '{$fieldtype}' does not support 'Clear' mode - skipping.");
+                    continue;
+                }
+
+                // Set appropriate empty value based on field type.
+                if ($fieldtype === 'textarea') {
+                    // Textarea - set to empty array with text and format.
+                    $value = ['text' => '', 'format' => FORMAT_HTML];
+                } else if ($fieldtype === 'date' || $fieldtype === 'select' || $fieldtype === 'checkbox') {
+                    // Date, select, and checkbox fields - set to 0.
+                    $value = 0;
+                } else {
+                    // Text and number fields - set to empty string.
+                    $value = '';
+                }
+
+                self::trace("... ... Setting field to empty value for field type '{$fieldtype}'.");
+            }
+
+            // If update mode is "all".
+            if ($updatemode == TOOL_COURSEFIELDS_ALL) {
+                // Trace.
+                self::trace("... ... Update mode: Always.");
+
+                // Safety net: For unique fields, ALL mode should never have been set in the GUI.
+                if ($isunique) {
+                    // Trace.
+                    self::trace("... ... Field is unique - 'Always' mode not allowed - skipping.");
+                    continue;
+                }
+            }
+
+            // Trace.
+            if (is_array($value)) {
+                if (isset($value['text'])) {
+                    $valueformtrace = mb_strimwidth($value['text'], 0, 50, "...");
+                } else {
+                    $valueformtrace = json_encode($value);
+                }
+            } else {
+                $valueformtrace = $value;
+            }
+            self::trace("... ... Setting field to the given new value: {$valueformtrace}");
+
+            // Set the field value in the course record to be stored later.
+            $record->{$fieldvaluekey} = $value;
         }
 
         // Trace.

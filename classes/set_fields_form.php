@@ -85,6 +85,7 @@ class set_fields_form extends \moodleform {
             $isunique = ($field->get_configdata_property('uniquevalues') == 1);
             $isrequired = ($field->get_configdata_property('required') == 1);
             $supportsemptymode = \tool_coursefields\set_fields::supports_empty_mode($fieldtype);
+            $supportsclearmode = \tool_coursefields\set_fields::supports_clear_mode($fieldtype);
 
             // Create "Do not change" option (always available).
             $rgroup = [
@@ -113,6 +114,28 @@ class set_fields_form extends \moodleform {
                 $overwriteradio->updateAttributes(['disabled' => 'disabled']);
             }
             $rgroup[] = $overwriteradio;
+
+            // Create "Clear" option (disabled if field type doesn't support it or if field is required).
+            $clearradiostring = get_string('overwritemode_clear', 'tool_coursefields');
+            $cleardisabled = false;
+            if ($isrequired) {
+                $clearradiostring .= ' [' . get_string('nopossiblerequired', 'tool_coursefields') . ']';
+                $cleardisabled = true;
+            } else if (!$supportsclearmode) {
+                $clearradiostring .= ' [' . get_string('nopossiblefieldtype', 'tool_coursefields') . ']';
+                $cleardisabled = true;
+            }
+            $clearradio = $mform->createElement(
+                'radio',
+                $rgroupname,
+                '',
+                $clearradiostring,
+                TOOL_COURSEFIELDS_CLEAR
+            );
+            if ($cleardisabled) {
+                $clearradio->updateAttributes(['disabled' => 'disabled']);
+            }
+            $rgroup[] = $clearradio;
 
             // Create "Only if empty" option (disabled if field type doesn't support it or if field is unique).
             $emptyradiostring = get_string('overwritemode_empty', 'tool_coursefields');
@@ -150,6 +173,7 @@ class set_fields_form extends \moodleform {
 
             // Hide the field if "Do not change" or "Clear" is selected.
             $mform->hideIf($elementname, 'customfieldupdate_' . $shortname, 'eq', TOOL_COURSEFIELDS_NONE);
+            $mform->hideIf($elementname, 'customfieldupdate_' . $shortname, 'eq', TOOL_COURSEFIELDS_CLEAR);
 
             unset(
                 $shortname,
@@ -210,9 +234,10 @@ class set_fields_form extends \moodleform {
             $isunique = ($field->get_configdata_property('uniquevalues') == 1);
 
             // Only validate if user selected "Overwrite" or "Only if empty" mode.
-            if (isset($data[$updatemodename]) &&
-                ($data[$updatemodename] == TOOL_COURSEFIELDS_ALL || $data[$updatemodename] == TOOL_COURSEFIELDS_EMPTY)) {
-
+            if (
+                isset($data[$updatemodename]) &&
+                ($data[$updatemodename] == TOOL_COURSEFIELDS_ALL || $data[$updatemodename] == TOOL_COURSEFIELDS_EMPTY)
+            ) {
                 // Get the field value from submitted data.
                 $fieldvalue = isset($data[$elementname]) ? $data[$elementname] : null;
 

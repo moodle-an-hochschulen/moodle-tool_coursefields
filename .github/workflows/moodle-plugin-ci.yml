@@ -17,3 +17,5 @@ jobs:
     uses: moodle-an-hochschulen/moodle-workflows/.github/workflows/moodle-plugin-ci.yml@main
     with:
       moodle-core-branch: ${{ inputs.moodle-core-branch || github.event.client_payload.moodle-core-branch }}
+      plugin-dependencies: |
+        andrewhancox/moodle-customfield_file,main_45

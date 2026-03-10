@@ -4,7 +4,7 @@ moodle-tool_coursedates
 Changes
 -------
 
-### Unreleased
+### v5.0-r3
 
 * 2026-02-15 - Improvement: Add option to clear existing field values.
 * 2026-02-15 - Improvement: Remove the possibility to overwrite unique fields and to clear required fields for the sake of error prevention.

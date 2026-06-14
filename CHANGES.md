@@ -4,6 +4,10 @@ moodle-tool_coursedates
 Changes
 -------
 
+### Unreleased
+
+* 2026-04-20 - Prepare compatibility for Moodle 5.2.
+
 ### v5.1-r2
 
 * 2026-02-15 - Improvement: Add option to clear existing field values.

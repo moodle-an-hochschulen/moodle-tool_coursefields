@@ -511,3 +511,27 @@ Feature: The course fields tool allows a manager to set custom course fields in 
     And I press "Confirm"
     Then I should see "is required and cannot be empty" in the "#id_error_customfield_f7" "css_element"
     And I should not see "An adhoc task has been queued"
+
+  @javascript
+  Scenario: Manager does overwrite fields which are configured to be invisible
+    Given the following "custom fields" exist:
+      | name    | category          | type | shortname | description | configdata         |
+      | Field 7 | Category for test | text | f7        | d7          | {"visibility":"0"} |
+      | Field 8 | Category for test | text | f8        | d8          | {"visibility":"1"} |
+    When I log in as "admin"
+    And I am on course index
+    And I follow "Category A"
+    And I navigate to "Set course fields" in current page administration
+    And I click on "Overwrite the field for all courses" "radio" in the "#fgroup_id_customfieldgroup_f7" "css_element"
+    And I click on "Overwrite the field for all courses" "radio" in the "#fgroup_id_customfieldgroup_f8" "css_element"
+    And I set the following fields to these values:
+      | Field 7 | testcontent7 |
+      | Field 8 | testcontent8 |
+    And I press "Confirm"
+    And I should see "An adhoc task has been queued"
+    And I run all adhoc tasks
+    And I am on "Course 1" course homepage
+    And I navigate to "Settings" in current page administration
+    Then the following fields match these values:
+      | Field 7 | testcontent7 |
+      | Field 8 | testcontent8 |

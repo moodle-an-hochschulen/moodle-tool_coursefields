@@ -139,8 +139,13 @@ class set_fields {
         $record = get_course($course->id);
 
         // Get the custom fields data for this course.
+        // We have to request _all_ fields and not just the visible ones here. Otherwise, fields which are configured
+        // with 'Visible to' = 'Nobody' (or with 'Visible to' = 'Teachers' if the user who runs this code does not have
+        // the moodle/course:update capability in the course) would be dropped silently and could never be set by this
+        // plugin. Requesting all fields is safe as the loop below only touches the fields for which an update mode was
+        // submitted in the form, and the form itself only offers the fields which the user is allowed to edit.
         $handler = \core_course\customfield\course_handler::create();
-        $customfields = $handler->get_instance_data($course->id);
+        $customfields = $handler->get_instance_data($course->id, true);
 
         // Trace.
         self::trace("Now processing: Course with ID {$course->id}.");

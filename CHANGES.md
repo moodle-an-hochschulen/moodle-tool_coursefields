@@ -4,6 +4,10 @@ moodle-tool_coursedates
 Changes
 -------
 
+### Unreleased
+
+* 2026-07-29 - Bugfix: The plugin was not able to overwrite fields which are configured to be invisible, resolves #7
+
 ### v5.2-r1
 
 * 2026-04-20 - Prepare compatibility for Moodle 5.2.

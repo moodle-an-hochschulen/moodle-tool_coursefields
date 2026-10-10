@@ -4,6 +4,10 @@ moodle-tool_coursefields
 Changes
 -------
 
+### Unreleased
+
+* 2026-10-05 - Prepare compatibility for Moodle 5.3.
+
 ### v5.2-r3
 
 * 2026-10-20 - Bugfix: Required select fields could be set to an empty value despite form validation, resolves #8

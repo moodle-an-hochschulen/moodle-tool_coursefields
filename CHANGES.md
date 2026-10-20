@@ -1,5 +1,5 @@
-moodle-tool_coursedates
-=======================
+moodle-tool_coursefields
+========================
 
 Changes
 -------

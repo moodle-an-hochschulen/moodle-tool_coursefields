@@ -513,6 +513,24 @@ Feature: The course fields tool allows a manager to set custom course fields in 
     And I should not see "An adhoc task has been queued"
 
   @javascript
+  Scenario: Manager cannot set a required select field to an empty value (form validation)
+    Given the following "custom fields" exist:
+      | name    | category          | type   | shortname | description | configdata                           |
+      | Field 7 | Category for test | select | f7        | d7          | {"required":"1","options":"x\ny\nz"} |
+    When I log in as "admin"
+    And I am on course index
+    And I follow "Category A"
+    And I navigate to "Set course fields" in current page administration
+    And I click on "Overwrite the field for all courses" "radio" in the "#fgroup_id_customfieldgroup_f7" "css_element"
+    And I press "Confirm"
+    Then I should see "is required and cannot be empty" in the "#id_error_customfield_f7" "css_element"
+    And I should not see "An adhoc task has been queued"
+    And I click on "Only set the field for courses where the field is empty" "radio" in the "#fgroup_id_customfieldgroup_f7" "css_element"
+    And I press "Confirm"
+    And I should see "is required and cannot be empty" in the "#id_error_customfield_f7" "css_element"
+    And I should not see "An adhoc task has been queued"
+
+  @javascript
   Scenario: Manager does overwrite fields which are configured to be invisible
     Given the following "custom fields" exist:
       | name    | category          | type | shortname | description | configdata         |

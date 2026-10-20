@@ -344,12 +344,19 @@ final class tool_coursefields_test extends \advanced_testcase {
         // Date fields.
         $this->assertTrue(set_fields::is_field_value_empty('date', null), 'Date: null should be empty');
         $this->assertTrue(set_fields::is_field_value_empty('date', 0), 'Date: 0 should be empty');
+        $this->assertTrue(set_fields::is_field_value_empty('date', '0'), 'Date: "0" should be empty');
         $this->assertFalse(set_fields::is_field_value_empty('date', 1234567890), 'Date: timestamp should not be empty');
+        $this->assertFalse(
+            set_fields::is_field_value_empty('date', '1234567890'),
+            'Date: timestamp string should not be empty'
+        );
 
         // Select fields.
         $this->assertTrue(set_fields::is_field_value_empty('select', null), 'Select: null should be empty');
         $this->assertTrue(set_fields::is_field_value_empty('select', 0), 'Select: 0 should be empty');
+        $this->assertTrue(set_fields::is_field_value_empty('select', '0'), 'Select: "0" should be empty');
         $this->assertFalse(set_fields::is_field_value_empty('select', 1), 'Select: 1 should not be empty');
+        $this->assertFalse(set_fields::is_field_value_empty('select', '1'), 'Select: "1" should not be empty');
         $this->assertFalse(set_fields::is_field_value_empty('select', 2), 'Select: 2 should not be empty');
 
         // Number fields.

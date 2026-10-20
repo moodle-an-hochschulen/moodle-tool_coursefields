@@ -4,6 +4,10 @@ moodle-tool_coursefields
 Changes
 -------
 
+### Unreleased
+
+* 2026-10-20 - Bugfix: Required select fields could be set to an empty value despite form validation, resolves #8
+
 ### v5.1-r3
 
 * 2026-07-29 - Bugfix: The plugin was not able to overwrite fields which are configured to be invisible, resolves #7

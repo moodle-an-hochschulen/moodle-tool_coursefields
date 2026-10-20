@@ -93,14 +93,11 @@ class set_fields {
             return false;
         }
 
-        // For date fields: 0 (int) or null means empty.
-        if ($fieldtype == 'date') {
-            return ($fieldvalue === null || $fieldvalue === 0);
-        }
-
-        // For select fields: 0 (int) or null means empty.
-        if ($fieldtype == 'select') {
-            return ($fieldvalue === null || $fieldvalue === 0);
+        // For date and select fields: 0 or null means empty.
+        // The value is an int if it comes from the customfield API, but a numeric string if it comes from a submitted
+        // form (e.g. the empty option of a select field is submitted as '0'). Thus, we must not compare strictly here.
+        if ($fieldtype == 'date' || $fieldtype == 'select') {
+            return empty($fieldvalue);
         }
 
         // For number fields: null or empty string means empty. 0 is a valid value.

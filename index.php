@@ -25,13 +25,16 @@
 
 require_once(__DIR__ . '/../../../config.php');
 
+// Get the parameters.
 $categoryid = required_param('category', PARAM_INT);
-$category = \core_course_category::get($categoryid);
-$context = \context_coursecat::instance($categoryid);
 
 // Ensure the user can be here.
 require_login(0, false);
+$context = \context_coursecat::instance($categoryid);
 require_capability('tool/coursefields:setfields', $context);
+
+// Prepare category and return url.
+$category = \core_course_category::get($categoryid);
 $returnurl = new \core\url('/course/management.php', ['categoryid' => $categoryid]);
 
 // Current location.

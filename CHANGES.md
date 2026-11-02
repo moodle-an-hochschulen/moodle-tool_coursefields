@@ -6,6 +6,7 @@ Changes
 
 ### Unreleased
 
+* 2026-11-02 - Improvement: Require login and capability before the category is resolved on the index page.
 * 2026-11-02 - Bugfix: The adhoc task ran as admin and thereby bypassed the per-course permission checks. It is now run as the user who queued it, so courses which this user is not allowed to edit (moodle/course:update) as well as locked fields which this user is not allowed to change (moodle/course:changelockedcustomfields) are skipped. Hidden courses which this user cannot see are skipped as well. The confirmation message now tells the user if courses will be skipped.
 
 ### v4.5-r5

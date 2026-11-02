@@ -41,3 +41,4 @@ $string['privacy:metadata'] = 'The Set course fields plugin does not store any p
 $string['setfields'] = 'Set course fields';
 $string['setfieldsinstruction'] = 'Set the course fields for all courses in a category, including subcategories. Choose your options and click "Confirm". On confirmation, Moodle will create an "adhoc task" to set all the course fields in the background. This requires that cron be enabled.';
 $string['updatequeued'] = 'An adhoc task has been queued to update all the courses in the category <strong>{$a}</strong>. It will run the next time cron executes.';
+$string['updatequeuedwithskipped'] = 'Please note that this category contains courses which you are not allowed to edit. These courses will be skipped by the update.';

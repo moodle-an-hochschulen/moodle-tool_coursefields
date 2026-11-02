@@ -121,6 +121,31 @@ class set_fields {
     }
 
     /**
+     * Check if the category (including its subcategories) contains courses which the current user is not allowed to edit.
+     *
+     * This uses the same course list and the same check as the adhoc task, so it tells in advance if the task will skip
+     * any courses when it is run as the current user.
+     *
+     * @param \core_course_category $category The category to check
+     * @return bool True if there is at least one course which the current user is not allowed to edit
+     */
+    public static function has_uneditable_courses(\core_course_category $category) {
+        $courses = $category->get_courses(
+            [
+                'recursive' => true,
+                'limit' => 0,
+            ]
+        );
+        foreach ($courses as $course) {
+            if (!$course->can_edit()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Alter course fields information for a single course.
      *
      * @param \core_course_list_element $course
@@ -129,6 +154,9 @@ class set_fields {
     public static function maybe_alter_course_fields($course, $fields) {
         // Do not do anything if the user can't edit the course.
         if (!$course->can_edit()) {
+            // Trace.
+            self::trace("Now skipping: Course with ID {$course->id} - the user is not allowed to edit this course.");
+
             return;
         }
 

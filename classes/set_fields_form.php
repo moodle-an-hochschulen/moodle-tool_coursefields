@@ -175,6 +175,21 @@ class set_fields_form extends \moodleform {
             $mform->hideIf($elementname, 'customfieldupdate_' . $shortname, 'eq', TOOL_COURSEFIELDS_NONE);
             $mform->hideIf($elementname, 'customfieldupdate_' . $shortname, 'eq', TOOL_COURSEFIELDS_CLEAR);
 
+            // Remove the required rule of the field as it would also fire if the field is hidden by the radio group.
+            // The required constraint is checked in validation() instead, depending on the selected update mode.
+            // All other rules of the field are kept. QuickForm does not offer an API to remove a rule, thus we have
+            // to modify the rule arrays directly.
+            if (isset($mform->_rules[$elementname])) {
+                $mform->_rules[$elementname] = array_values(array_filter(
+                    $mform->_rules[$elementname],
+                    fn($rule) => $rule['type'] !== 'required'
+                ));
+                if (empty($mform->_rules[$elementname])) {
+                    unset($mform->_rules[$elementname]);
+                }
+            }
+            $mform->_required = array_values(array_diff($mform->_required, [$elementname]));
+
             unset(
                 $shortname,
                 $elementname,
@@ -188,10 +203,6 @@ class set_fields_form extends \moodleform {
                 $staticelement
             );
         }
-
-        // Get rid of any required rules in this form as these won't validate correctly with the checkbox elements.
-        $mform->_required = [];
-        $mform->_rules = [];
 
         // Metadata.
         $mform->addElement('hidden', 'category');
@@ -211,12 +222,12 @@ class set_fields_form extends \moodleform {
     public function validation($data, $files) {
         $errors = parent::validation($data, $files);
 
-        // Get the custom fields to check required fields.
+        // Get the custom fields to validate them.
         $handler = \core_course\customfield\course_handler::create();
         $handler->set_parent_context(\context_coursecat::instance($this->_customdata['category']));
         $editablefields = $handler->get_editable_fields(0);
 
-        // Check each field for required validation.
+        // Validate each field.
         foreach ($editablefields as $field) {
             $shortname = $field->get('shortname');
             $fieldtype = $field->get('type');
@@ -231,7 +242,6 @@ class set_fields_form extends \moodleform {
 
             // Check if this is a required field.
             $isrequired = ($field->get_configdata_property('required') == 1);
-            $isunique = ($field->get_configdata_property('uniquevalues') == 1);
 
             // Only validate if user selected "Overwrite" or "Only if empty" mode.
             if (
@@ -242,6 +252,7 @@ class set_fields_form extends \moodleform {
                 $fieldvalue = isset($data[$elementname]) ? $data[$elementname] : null;
 
                 // Validate required fields.
+                // This has to be done here as the required rules of the fields have been removed from the form.
                 if ($isrequired) {
                     // Use centralized logic to check if field is empty.
                     $isempty = \tool_coursefields\set_fields::is_field_value_empty($fieldtype, $fieldvalue);
@@ -251,27 +262,11 @@ class set_fields_form extends \moodleform {
                     }
                 }
 
-                // Validate unique fields.
-                if ($isunique && !isset($errors[$elementname])) {
-                    // Check if the value is not empty (we only check uniqueness for non-empty values).
-                    $isempty = \tool_coursefields\set_fields::is_field_value_empty($fieldtype, $fieldvalue);
-
-                    if (!$isempty) {
-                        // Use the customfield API's built-in unique validation which checks system-wide.
-                        // Create a temporary data controller instance for validation.
-                        $datacontroller = \core_customfield\data_controller::create(0, null, $field);
-
-                        // Prepare validation data in the format expected by instance_form_validation.
-                        $validationdata = [$elementname => $fieldvalue];
-
-                        // Run the built-in unique validation (checks system-wide in customfield_data table).
-                        $validationerrors = $datacontroller->instance_form_validation($validationdata, []);
-
-                        // Add any errors to our errors array.
-                        if (!empty($validationerrors)) {
-                            $errors = array_merge($errors, $validationerrors);
-                        }
-                    }
+                // Run the validation of the field type (e.g. maximum length, value range, date range, unique values).
+                // Create a temporary data controller instance for validation.
+                if (!isset($errors[$elementname])) {
+                    $datacontroller = \core_customfield\data_controller::create(0, null, $field);
+                    $errors += $datacontroller->instance_form_validation($data, $files);
                 }
             }
         }

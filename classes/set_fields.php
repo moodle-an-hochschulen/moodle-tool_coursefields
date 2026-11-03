@@ -193,6 +193,9 @@ class set_fields {
         // Trace.
         self::trace("Now processing: Course with ID {$course->id}.");
 
+        // Remember if any field value was set in the course record.
+        $haschanges = false;
+
         // Iterate over all custom course fields that exist in Moodle.
         // This approach is independent of whether fields are hidden in the form or not.
         foreach ($customfields as $data) {
@@ -342,6 +345,17 @@ class set_fields {
 
             // Set the field value in the course record to be stored later.
             $record->{$fieldvaluekey} = $value;
+            $haschanges = true;
+        }
+
+        // Do not update the course if no field value was set.
+        // Otherwise, the course would be updated needlessly, including a course_updated event, a changed modification time
+        // and purged caches.
+        if (!$haschanges) {
+            // Trace.
+            self::trace("... No field value was set - skipping the course update.");
+
+            return;
         }
 
         // Trace.

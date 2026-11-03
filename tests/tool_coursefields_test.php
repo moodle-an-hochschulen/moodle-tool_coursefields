@@ -633,6 +633,93 @@ final class tool_coursefields_test extends \advanced_testcase {
     }
 
     /**
+     * Test that the course is only updated if a field value was set.
+     *
+     * Tests that no course_updated event is triggered if no field is changed (no update mode, update mode "None" or
+     * update mode "Only if empty" for a field which already has a value), while the course is updated otherwise.
+     */
+    public function test_course_update_skipped_without_changes(): void {
+        global $DB;
+
+        // Create and login as admin to have edit permissions.
+        $this->setAdminUser();
+
+        // Create category and course.
+        $category = $this->getDataGenerator()->create_category(['name' => 'Test Category']);
+        $course = $this->getDataGenerator()->create_course(['category' => $category->id]);
+
+        // Create custom field category and two text fields.
+        $fieldcategory = $this->getDataGenerator()->create_custom_field_category([
+            'component' => 'core_course',
+            'area' => 'course',
+            'name' => 'Test Fields',
+        ]);
+        $this->getDataGenerator()->create_custom_field([
+            'categoryid' => $fieldcategory->get('id'),
+            'type' => 'text',
+            'shortname' => 'filledfield',
+            'name' => 'Filled Field',
+        ]);
+        $this->getDataGenerator()->create_custom_field([
+            'categoryid' => $fieldcategory->get('id'),
+            'type' => 'text',
+            'shortname' => 'otherfield',
+            'name' => 'Other Field',
+        ]);
+
+        // Set an initial value for the filled field.
+        $courserecord = $DB->get_record('course', ['id' => $course->id], '*', MUST_EXIST);
+        $courserecord->customfield_filledfield = 'initialvalue';
+        update_course($courserecord);
+
+        // Get course as object with can_edit method.
+        $courseobj = new \core_course_list_element($course);
+
+        // Test 1: No update mode for any field - the course must not be updated.
+        $sink = $this->redirectEvents();
+        set_fields::maybe_alter_course_fields($courseobj, new \stdClass());
+        $this->assertCount(0, $this->get_course_updated_events($sink));
+
+        // Test 2: Update mode "None" and "Only if empty" for a filled field - the course must not be updated.
+        $fields = new \stdClass();
+        $fields->customfield_filledfield = 'newvalue';
+        $fields->customfieldupdate_filledfield = TOOL_COURSEFIELDS_EMPTY;
+        $fields->customfield_otherfield = 'newvalue';
+        $fields->customfieldupdate_otherfield = TOOL_COURSEFIELDS_NONE;
+        $sink->clear();
+        set_fields::maybe_alter_course_fields($courseobj, $fields);
+        $this->assertCount(0, $this->get_course_updated_events($sink));
+
+        // Test 3: Update mode "Always" - the course must be updated.
+        $fields->customfieldupdate_filledfield = TOOL_COURSEFIELDS_ALL;
+        $sink->clear();
+        set_fields::maybe_alter_course_fields($courseobj, $fields);
+        $this->assertCount(1, $this->get_course_updated_events($sink));
+        $sink->close();
+
+        // Verify the values of the fields.
+        $handler = course_handler::create();
+        $values = [];
+        foreach ($handler->get_instance_data($course->id, true) as $data) {
+            $values[$data->get_field()->get('shortname')] = $data->get_value();
+        }
+        $this->assertEquals('newvalue', $values['filledfield']);
+        $this->assertEmpty($values['otherfield']);
+    }
+
+    /**
+     * Helper function to get the course_updated events from an event sink.
+     *
+     * @param \phpunit_event_sink $sink The event sink
+     * @return array The course_updated events
+     */
+    private function get_course_updated_events(\phpunit_event_sink $sink): array {
+        return array_filter($sink->get_events(), function ($event) {
+            return $event instanceof \core\event\course_updated;
+        });
+    }
+
+    /**
      * Test has_uneditable_courses function with hidden courses.
      *
      * Tests that hidden courses which the current user cannot see are detected, even if the user would be allowed to edit

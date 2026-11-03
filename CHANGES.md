@@ -6,6 +6,7 @@ Changes
 
 ### Unreleased
 
+* 2026-11-03 - Improvement: Do not update a course if no field value is changed for this course (e.g. if all fields are set to "Only if empty" and already have a value). This avoids needless course_updated events, changed modification times and cache purges.
 * 2026-11-02 - Bugfix: The form did not run the validation of the custom field types (e.g. maximum length of text fields, value range of number fields, date range of date fields) and discarded all form rules. Now, only the required rules of the custom fields are removed from the form and the validation of the custom field types is run for all fields which are set.
 * 2026-11-02 - Improvement: Require login and capability before the category is resolved on the index page.
 * 2026-11-02 - Bugfix: The adhoc task ran as admin and thereby bypassed the per-course permission checks. It is now run as the user who queued it, so courses which this user is not allowed to edit (moodle/course:update) as well as locked fields which this user is not allowed to change (moodle/course:changelockedcustomfields) are skipped. Hidden courses which this user cannot see are skipped as well. The confirmation message now tells the user if courses will be skipped, including hidden courses which this user cannot see.

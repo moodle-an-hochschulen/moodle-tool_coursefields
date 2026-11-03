@@ -531,6 +531,66 @@ Feature: The course fields tool allows a manager to set custom course fields in 
     And I should not see "An adhoc task has been queued"
 
   @javascript
+  Scenario: Manager can submit the form while an empty required field is not changed (form validation)
+    Given the following "custom fields" exist:
+      | name    | category          | type | shortname | description | configdata       |
+      | Field 7 | Category for test | text | f7        | d7          | {"required":"1"} |
+    When I log in as "admin"
+    And I am on course index
+    And I follow "Category A"
+    And I navigate to "Set course fields" in current page administration
+    And I click on "Overwrite the field for all courses" "radio" in the "#fgroup_id_customfieldgroup_f1" "css_element"
+    And I set the following fields to these values:
+      | Field 1 | testcontent1 |
+    And I press "Confirm"
+    Then I should see "An adhoc task has been queued"
+
+  @javascript
+  Scenario: Manager cannot set a text field to a value which exceeds the maximum length (form validation)
+    Given the following "custom fields" exist:
+      | name    | category          | type | shortname | description | configdata        |
+      | Field 7 | Category for test | text | f7        | d7          | {"maxlength":"5"} |
+    When I log in as "admin"
+    And I am on course index
+    And I follow "Category A"
+    And I navigate to "Set course fields" in current page administration
+    And I click on "Overwrite the field for all courses" "radio" in the "#fgroup_id_customfieldgroup_f7" "css_element"
+    And I set the following fields to these values:
+      | Field 7 | 123456 |
+    And I press "Confirm"
+    Then I should see "The maximum number of characters allowed in this field is 5." in the "#id_error_customfield_f7" "css_element"
+    And I should not see "An adhoc task has been queued"
+    And I set the following fields to these values:
+      | Field 7 | 12345 |
+    And I press "Confirm"
+    And I should see "An adhoc task has been queued"
+
+  @javascript
+  Scenario: Manager cannot set a number field to a value outside of the allowed range (form validation)
+    Given the following "custom fields" exist:
+      | name    | category          | type   | shortname | description | configdata                               |
+      | Field 7 | Category for test | number | f7        | d7          | {"minimumvalue":"1","maximumvalue":"10"} |
+    When I log in as "admin"
+    And I am on course index
+    And I follow "Category A"
+    And I navigate to "Set course fields" in current page administration
+    And I click on "Only set the field for courses where the field is empty" "radio" in the "#fgroup_id_customfieldgroup_f7" "css_element"
+    And I set the following fields to these values:
+      | Field 7 | 11 |
+    And I press "Confirm"
+    Then I should see "Value must be less than or equal to 10" in the "#id_error_customfield_f7" "css_element"
+    And I should not see "An adhoc task has been queued"
+    And I set the following fields to these values:
+      | Field 7 | 0 |
+    And I press "Confirm"
+    And I should see "Value must be greater than or equal to 1" in the "#id_error_customfield_f7" "css_element"
+    And I should not see "An adhoc task has been queued"
+    And I set the following fields to these values:
+      | Field 7 | 5 |
+    And I press "Confirm"
+    And I should see "An adhoc task has been queued"
+
+  @javascript
   Scenario: Manager does overwrite fields which are configured to be invisible
     Given the following "custom fields" exist:
       | name    | category          | type | shortname | description | configdata         |

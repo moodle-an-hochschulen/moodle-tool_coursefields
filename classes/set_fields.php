@@ -124,18 +124,36 @@ class set_fields {
      * Check if the category (including its subcategories) contains courses which the current user is not allowed to edit.
      *
      * This uses the same course list and the same check as the adhoc task, so it tells in advance if the task will skip
-     * any courses when it is run as the current user.
+     * any courses when it is run as the current user. This includes hidden courses which the current user cannot see.
      *
      * @param \core_course_category $category The category to check
      * @return bool True if there is at least one course which the current user is not allowed to edit
      */
     public static function has_uneditable_courses(\core_course_category $category) {
+        global $DB;
+
         $courses = $category->get_courses(
             [
                 'recursive' => true,
                 'limit' => 0,
             ]
         );
+
+        // Check if there are courses in the category which the current user cannot see at all.
+        // These courses are not returned by get_courses() and will thus be skipped by the adhoc task as well.
+        $context = \context_coursecat::instance($category->id);
+        $sql = "SELECT COUNT(c.id)
+                  FROM {course} c
+                  JOIN {context} ctx ON ctx.instanceid = c.id AND ctx.contextlevel = :contextcourse
+                 WHERE ctx.path LIKE :path";
+        $total = $DB->count_records_sql($sql, [
+            'contextcourse' => CONTEXT_COURSE,
+            'path' => $context->path . '/%',
+        ]);
+        if ($total > count($courses)) {
+            return true;
+        }
+
         foreach ($courses as $course) {
             if (!$course->can_edit()) {
                 return true;

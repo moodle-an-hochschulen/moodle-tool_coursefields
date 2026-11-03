@@ -633,6 +633,48 @@ final class tool_coursefields_test extends \advanced_testcase {
     }
 
     /**
+     * Test has_uneditable_courses function with hidden courses.
+     *
+     * Tests that hidden courses which the current user cannot see are detected, even if the user would be allowed to edit
+     * them, as they are skipped by the adhoc task.
+     */
+    public function test_has_uneditable_courses_hidden(): void {
+        global $DB;
+
+        // Create category with subcategory, a visible course and a hidden course.
+        $category = $this->getDataGenerator()->create_category(['name' => 'Test Category']);
+        $subcategory = $this->getDataGenerator()->create_category(['name' => 'Test Subcategory', 'parent' => $category->id]);
+        $this->getDataGenerator()->create_course(['category' => $category->id]);
+        $hiddencourse = $this->getDataGenerator()->create_course(['category' => $subcategory->id, 'visible' => 0]);
+
+        // Create a user and assign the manager role in the category.
+        $user = $this->getDataGenerator()->create_user();
+        $managerroleid = $DB->get_field('role', 'id', ['shortname' => 'manager'], MUST_EXIST);
+        $this->getDataGenerator()->role_assign($managerroleid, $user->id, \context_coursecat::instance($category->id));
+
+        // Test 1: The manager is allowed to see and edit all courses, including the hidden one.
+        $this->setUser($user);
+        $this->assertFalse(set_fields::has_uneditable_courses(\core_course_category::get($category->id)));
+
+        // Test 2: The manager is still allowed to edit the hidden course, but not to see it anymore.
+        $this->setAdminUser();
+        assign_capability(
+            'moodle/course:viewhiddencourses',
+            CAP_PROHIBIT,
+            $managerroleid,
+            \context_course::instance($hiddencourse->id)->id
+        );
+        // The course list of the category is cached in the user's session, including the result of the visibility check.
+        \cache::make('core', 'coursecat')->purge();
+        $this->setUser($user);
+        $this->assertTrue(has_capability('moodle/course:update', \context_course::instance($hiddencourse->id)));
+        $this->assertTrue(set_fields::has_uneditable_courses(\core_course_category::get($category->id)));
+
+        // Test 3: Checking the subcategory alone detects the hidden course as well.
+        $this->assertTrue(set_fields::has_uneditable_courses(\core_course_category::get($subcategory->id)));
+    }
+
+    /**
      * Test that the adhoc task respects the permissions of the user who queued it.
      *
      * Tests that courses which the user is not allowed to edit and locked fields which the user is not allowed to change

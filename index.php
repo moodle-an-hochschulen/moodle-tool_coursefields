@@ -25,13 +25,16 @@
 
 require_once(__DIR__ . '/../../../config.php');
 
+// Get the parameters.
 $categoryid = required_param('category', PARAM_INT);
-$category = \core_course_category::get($categoryid);
-$context = \context_coursecat::instance($categoryid);
 
 // Ensure the user can be here.
 require_login(0, false);
+$context = \context_coursecat::instance($categoryid);
 require_capability('tool/coursefields:setfields', $context);
+
+// Prepare category and return url.
+$category = \core_course_category::get($categoryid);
 $returnurl = new \core\url('/course/management.php', ['categoryid' => $categoryid]);
 
 // Current location.
@@ -55,7 +58,9 @@ if ($mform->is_cancelled()) {
     redirect($returnurl);
 } else if ($data = $mform->get_data()) {
     // Process data.
+    // The task is run as the current user to make sure that only courses which this user is allowed to edit are updated.
     $task = new \tool_coursefields\task\set_course_fields_task();
+    $task->set_userid($USER->id);
     $task->set_custom_data(
         [
             'category' => $categoryid,
@@ -63,11 +68,18 @@ if ($mform->is_cancelled()) {
         ]
     );
     \core\task\manager::queue_adhoc_task($task);
-    redirect($returnurl, get_string(
+
+    $queuedmessage = get_string(
         'updatequeued',
         'tool_coursefields',
         format_string($category->name, true, ['context' => $context])
-    ));
+    );
+
+    // Tell the user if some courses will be skipped as they are not allowed to edit them.
+    if (\tool_coursefields\set_fields::has_uneditable_courses($category)) {
+        $queuedmessage .= '<br />' . get_string('updatequeuedwithskipped', 'tool_coursefields');
+    }
+    redirect($returnurl, $queuedmessage);
 } else {
     // Prepare the form.
     $mform->set_data(['category' => $categoryid]);

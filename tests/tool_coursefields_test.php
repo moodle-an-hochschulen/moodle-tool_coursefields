@@ -593,4 +593,287 @@ final class tool_coursefields_test extends \advanced_testcase {
             'Validation should pass when setting a unique field with an empty value'
         );
     }
+
+    /**
+     * Test has_uneditable_courses function.
+     *
+     * Tests that courses (including courses in subcategories) which the current user is not allowed to edit are detected.
+     */
+    public function test_has_uneditable_courses(): void {
+        global $DB;
+
+        // Create category with subcategory and courses.
+        $category = $this->getDataGenerator()->create_category(['name' => 'Test Category']);
+        $subcategory = $this->getDataGenerator()->create_category(['name' => 'Test Subcategory', 'parent' => $category->id]);
+        $this->getDataGenerator()->create_course(['category' => $category->id]);
+        $subcourse = $this->getDataGenerator()->create_course(['category' => $subcategory->id]);
+
+        // Create a user and assign the manager role in the category.
+        $user = $this->getDataGenerator()->create_user();
+        $managerroleid = $DB->get_field('role', 'id', ['shortname' => 'manager'], MUST_EXIST);
+        $this->getDataGenerator()->role_assign($managerroleid, $user->id, \context_coursecat::instance($category->id));
+
+        // Test 1: The manager is allowed to edit all courses.
+        $this->setUser($user);
+        $this->assertFalse(set_fields::has_uneditable_courses(\core_course_category::get($category->id)));
+
+        // Test 2: The manager is not allowed to edit the course in the subcategory anymore.
+        $this->setAdminUser();
+        assign_capability(
+            'moodle/course:update',
+            CAP_PROHIBIT,
+            $managerroleid,
+            \context_course::instance($subcourse->id)->id
+        );
+        $this->setUser($user);
+        $this->assertTrue(set_fields::has_uneditable_courses(\core_course_category::get($category->id)));
+
+        // Test 3: Checking the subcategory alone detects the course as well.
+        $this->assertTrue(set_fields::has_uneditable_courses(\core_course_category::get($subcategory->id)));
+    }
+
+    /**
+     * Test that the course is only updated if a field value was set.
+     *
+     * Tests that no course_updated event is triggered if no field is changed (no update mode, update mode "None" or
+     * update mode "Only if empty" for a field which already has a value), while the course is updated otherwise.
+     */
+    public function test_course_update_skipped_without_changes(): void {
+        global $DB;
+
+        // Create and login as admin to have edit permissions.
+        $this->setAdminUser();
+
+        // Create category and course.
+        $category = $this->getDataGenerator()->create_category(['name' => 'Test Category']);
+        $course = $this->getDataGenerator()->create_course(['category' => $category->id]);
+
+        // Create custom field category and two text fields.
+        $fieldcategory = $this->getDataGenerator()->create_custom_field_category([
+            'component' => 'core_course',
+            'area' => 'course',
+            'name' => 'Test Fields',
+        ]);
+        $this->getDataGenerator()->create_custom_field([
+            'categoryid' => $fieldcategory->get('id'),
+            'type' => 'text',
+            'shortname' => 'filledfield',
+            'name' => 'Filled Field',
+        ]);
+        $this->getDataGenerator()->create_custom_field([
+            'categoryid' => $fieldcategory->get('id'),
+            'type' => 'text',
+            'shortname' => 'otherfield',
+            'name' => 'Other Field',
+        ]);
+
+        // Set an initial value for the filled field.
+        $courserecord = $DB->get_record('course', ['id' => $course->id], '*', MUST_EXIST);
+        $courserecord->customfield_filledfield = 'initialvalue';
+        update_course($courserecord);
+
+        // Get course as object with can_edit method.
+        $courseobj = new \core_course_list_element($course);
+
+        // Test 1: No update mode for any field - the course must not be updated.
+        $sink = $this->redirectEvents();
+        set_fields::maybe_alter_course_fields($courseobj, new \stdClass());
+        $this->assertCount(0, $this->get_course_updated_events($sink));
+
+        // Test 2: Update mode "None" and "Only if empty" for a filled field - the course must not be updated.
+        $fields = new \stdClass();
+        $fields->customfield_filledfield = 'newvalue';
+        $fields->customfieldupdate_filledfield = TOOL_COURSEFIELDS_EMPTY;
+        $fields->customfield_otherfield = 'newvalue';
+        $fields->customfieldupdate_otherfield = TOOL_COURSEFIELDS_NONE;
+        $sink->clear();
+        set_fields::maybe_alter_course_fields($courseobj, $fields);
+        $this->assertCount(0, $this->get_course_updated_events($sink));
+
+        // Test 3: Update mode "Always" - the course must be updated.
+        $fields->customfieldupdate_filledfield = TOOL_COURSEFIELDS_ALL;
+        $sink->clear();
+        set_fields::maybe_alter_course_fields($courseobj, $fields);
+        $this->assertCount(1, $this->get_course_updated_events($sink));
+        $sink->close();
+
+        // Verify the values of the fields.
+        $handler = course_handler::create();
+        $values = [];
+        foreach ($handler->get_instance_data($course->id, true) as $data) {
+            $values[$data->get_field()->get('shortname')] = $data->get_value();
+        }
+        $this->assertEquals('newvalue', $values['filledfield']);
+        $this->assertEmpty($values['otherfield']);
+    }
+
+    /**
+     * Helper function to get the course_updated events from an event sink.
+     *
+     * @param \phpunit_event_sink $sink The event sink
+     * @return array The course_updated events
+     */
+    private function get_course_updated_events(\phpunit_event_sink $sink): array {
+        return array_filter($sink->get_events(), function ($event) {
+            return $event instanceof \core\event\course_updated;
+        });
+    }
+
+    /**
+     * Test has_uneditable_courses function with hidden courses.
+     *
+     * Tests that hidden courses which the current user cannot see are detected, even if the user would be allowed to edit
+     * them, as they are skipped by the adhoc task.
+     */
+    public function test_has_uneditable_courses_hidden(): void {
+        global $DB;
+
+        // Create category with subcategory, a visible course and a hidden course.
+        $category = $this->getDataGenerator()->create_category(['name' => 'Test Category']);
+        $subcategory = $this->getDataGenerator()->create_category(['name' => 'Test Subcategory', 'parent' => $category->id]);
+        $this->getDataGenerator()->create_course(['category' => $category->id]);
+        $hiddencourse = $this->getDataGenerator()->create_course(['category' => $subcategory->id, 'visible' => 0]);
+
+        // Create a user and assign the manager role in the category.
+        $user = $this->getDataGenerator()->create_user();
+        $managerroleid = $DB->get_field('role', 'id', ['shortname' => 'manager'], MUST_EXIST);
+        $this->getDataGenerator()->role_assign($managerroleid, $user->id, \context_coursecat::instance($category->id));
+
+        // Test 1: The manager is allowed to see and edit all courses, including the hidden one.
+        $this->setUser($user);
+        $this->assertFalse(set_fields::has_uneditable_courses(\core_course_category::get($category->id)));
+
+        // Test 2: The manager is still allowed to edit the hidden course, but not to see it anymore.
+        $this->setAdminUser();
+        assign_capability(
+            'moodle/course:viewhiddencourses',
+            CAP_PROHIBIT,
+            $managerroleid,
+            \context_course::instance($hiddencourse->id)->id
+        );
+        // The course list of the category is cached in the user's session, including the result of the visibility check.
+        \cache::make('core', 'coursecat')->purge();
+        $this->setUser($user);
+        $this->assertTrue(has_capability('moodle/course:update', \context_course::instance($hiddencourse->id)));
+        $this->assertTrue(set_fields::has_uneditable_courses(\core_course_category::get($category->id)));
+
+        // Test 3: Checking the subcategory alone detects the hidden course as well.
+        $this->assertTrue(set_fields::has_uneditable_courses(\core_course_category::get($subcategory->id)));
+    }
+
+    /**
+     * Test that the adhoc task respects the permissions of the user who queued it.
+     *
+     * Tests that courses which the user is not allowed to edit and locked fields which the user is not allowed to change
+     * in a particular course are skipped, while all other courses are updated.
+     *
+     * @covers \tool_coursefields\task\set_course_fields_task
+     */
+    public function test_task_respects_user_permissions(): void {
+        global $DB;
+
+        // Create and login as admin to set up the environment.
+        $this->setAdminUser();
+
+        // Create category and courses.
+        $category = $this->getDataGenerator()->create_category(['name' => 'Test Category']);
+        $editablecourse = $this->getDataGenerator()->create_course(['category' => $category->id]);
+        $uneditablecourse = $this->getDataGenerator()->create_course(['category' => $category->id]);
+        $lockedcourse = $this->getDataGenerator()->create_course(['category' => $category->id]);
+
+        // Create custom field category.
+        $fieldcategory = $this->getDataGenerator()->create_custom_field_category([
+            'component' => 'core_course',
+            'area' => 'course',
+            'name' => 'Test Fields',
+        ]);
+
+        // Create a normal and a locked text field.
+        $this->getDataGenerator()->create_custom_field([
+            'categoryid' => $fieldcategory->get('id'),
+            'type' => 'text',
+            'shortname' => 'normalfield',
+            'name' => 'Normal Field',
+        ]);
+        $this->getDataGenerator()->create_custom_field([
+            'categoryid' => $fieldcategory->get('id'),
+            'type' => 'text',
+            'shortname' => 'lockedfield',
+            'name' => 'Locked Field',
+            'configdata' => json_encode(['locked' => '1']),
+        ]);
+
+        // Create a user and assign the manager role in the category.
+        $user = $this->getDataGenerator()->create_user();
+        $managerroleid = $DB->get_field('role', 'id', ['shortname' => 'manager'], MUST_EXIST);
+        $this->getDataGenerator()->role_assign($managerroleid, $user->id, \context_coursecat::instance($category->id));
+
+        // Prevent the manager from editing one course and from changing locked fields in another course.
+        assign_capability(
+            'moodle/course:update',
+            CAP_PROHIBIT,
+            $managerroleid,
+            \context_course::instance($uneditablecourse->id)->id
+        );
+        assign_capability(
+            'moodle/course:changelockedcustomfields',
+            CAP_PROHIBIT,
+            $managerroleid,
+            \context_course::instance($lockedcourse->id)->id
+        );
+
+        // Queue the task as the user, like index.php does.
+        $this->setUser($user);
+        $fields = new \stdClass();
+        $fields->customfield_normalfield = 'newvalue';
+        $fields->customfieldupdate_normalfield = TOOL_COURSEFIELDS_ALL;
+        $fields->customfield_lockedfield = 'newlockedvalue';
+        $fields->customfieldupdate_lockedfield = TOOL_COURSEFIELDS_ALL;
+        $task = new \tool_coursefields\task\set_course_fields_task();
+        $task->set_userid($user->id);
+        $task->set_custom_data(
+            [
+                'category' => $category->id,
+                'fields' => $fields,
+            ]
+        );
+        \core\task\manager::queue_adhoc_task($task);
+
+        // Run the task (as the user who queued it).
+        $this->setAdminUser();
+        $this->runAdhocTasks(\tool_coursefields\task\set_course_fields_task::class);
+
+        // The editable course must have both fields updated.
+        $this->assertEquals(
+            ['normalfield' => 'newvalue', 'lockedfield' => 'newlockedvalue'],
+            $this->get_course_field_values($editablecourse->id)
+        );
+
+        // The uneditable course must not have been touched at all.
+        $this->assertEquals(
+            ['normalfield' => null, 'lockedfield' => null],
+            $this->get_course_field_values($uneditablecourse->id)
+        );
+
+        // The course with the prohibited locked fields must only have the normal field updated.
+        $this->assertEquals(
+            ['normalfield' => 'newvalue', 'lockedfield' => null],
+            $this->get_course_field_values($lockedcourse->id)
+        );
+    }
+
+    /**
+     * Helper function to get the custom field values of a course, keyed by field shortname.
+     *
+     * @param int $courseid The course id
+     * @return array The custom field values
+     */
+    private function get_course_field_values(int $courseid): array {
+        $handler = course_handler::create();
+        $values = [];
+        foreach ($handler->get_instance_data($courseid, true) as $data) {
+            $values[$data->get_field()->get('shortname')] = $data->get_value();
+        }
+        return $values;
+    }
 }

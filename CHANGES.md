@@ -4,7 +4,7 @@ moodle-tool_coursefields
 Changes
 -------
 
-### Unreleased
+### v5.0-r6
 
 * 2026-11-03 - Improvement: Do not update a course if no field value is changed for this course (e.g. if all fields are set to "Only if empty" and already have a value). This avoids needless course_updated events, changed modification times and cache purges.
 * 2026-11-02 - Bugfix: The form did not run the validation of the custom field types (e.g. maximum length of text fields, value range of number fields, date range of date fields) and discarded all form rules. Now, only the required rules of the custom fields are removed from the form and the validation of the custom field types is run for all fields which are set.

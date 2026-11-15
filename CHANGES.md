@@ -4,6 +4,10 @@ moodle-tool_coursefields
 Changes
 -------
 
+### Unreleased
+
+* 2026-11-15 - Bugfix: The adhoc task failed and was retried again and again if the category was deleted or hidden from the user after the task was queued. Now, the task exits cleanly with a trace message in this case.
+
 ### v5.0-r6
 
 * 2026-11-03 - Improvement: Do not update a course if no field value is changed for this course (e.g. if all fields are set to "Only if empty" and already have a value). This avoids needless course_updated events, changed modification times and cache purges.

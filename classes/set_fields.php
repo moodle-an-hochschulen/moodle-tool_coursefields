@@ -170,6 +170,19 @@ class set_fields {
      * @param \stdClass $fields
      */
     public static function maybe_alter_course_fields($course, $fields) {
+        global $DB;
+
+        // Get the original course record without throwing an exception if the course was deleted since the course list
+        // was built by the adhoc task. Otherwise, the task would fail and would be retried as a whole.
+        // This has to be done before the permission check as that one would throw an exception for a deleted course as well.
+        $record = $DB->get_record('course', ['id' => $course->id]);
+        if (!$record) {
+            // Trace.
+            self::trace("Now skipping: Course with ID {$course->id} - the course does not exist anymore.");
+
+            return;
+        }
+
         // Do not do anything if the user can't edit the course.
         if (!$course->can_edit()) {
             // Trace.
@@ -177,9 +190,6 @@ class set_fields {
 
             return;
         }
-
-        // Get the original course record.
-        $record = get_course($course->id);
 
         // Get the custom fields data for this course.
         // We have to request _all_ fields and not just the visible ones here. Otherwise, fields which are configured

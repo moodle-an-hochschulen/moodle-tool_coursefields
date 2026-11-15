@@ -197,10 +197,7 @@ class set_fields_form extends \moodleform {
                 $headerelementname,
                 $headerelement,
                 $rgroupname,
-                $rgroup,
-                $staticelementname,
-                $staticelementnotes,
-                $staticelement
+                $rgroup
             );
         }
 

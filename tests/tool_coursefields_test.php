@@ -934,6 +934,43 @@ final class tool_coursefields_test extends \advanced_testcase {
     }
 
     /**
+     * Test that a course which was deleted after the course list was built by the adhoc task is skipped.
+     *
+     * @covers \tool_coursefields\set_fields::maybe_alter_course_fields
+     */
+    public function test_maybe_alter_course_fields_skips_deleted_course(): void {
+        // Create and login as admin to set up the environment.
+        $this->setAdminUser();
+
+        // Create a course and a custom field.
+        $course = $this->getDataGenerator()->create_course();
+        $fieldcategory = $this->getDataGenerator()->create_custom_field_category([
+            'component' => 'core_course',
+            'area' => 'course',
+            'name' => 'Test Fields',
+        ]);
+        $this->getDataGenerator()->create_custom_field([
+            'categoryid' => $fieldcategory->get('id'),
+            'type' => 'text',
+            'shortname' => 'normalfield',
+            'name' => 'Normal Field',
+        ]);
+
+        // Get course as object with can_edit method, like the adhoc task does, and delete the course afterwards.
+        $courseobj = new \core_course_list_element($course);
+        delete_course($course->id, false);
+
+        // Process the course. This must not throw an exception and must not update anything.
+        $fields = new \stdClass();
+        $fields->customfield_normalfield = 'newvalue';
+        $fields->customfieldupdate_normalfield = TOOL_COURSEFIELDS_ALL;
+        $sink = $this->redirectEvents();
+        set_fields::maybe_alter_course_fields($courseobj, $fields);
+        $this->assertCount(0, $this->get_course_updated_events($sink));
+        $sink->close();
+    }
+
+    /**
      * Helper function to queue the adhoc task for a category, like index.php does.
      *
      * @param int $categoryid The category id

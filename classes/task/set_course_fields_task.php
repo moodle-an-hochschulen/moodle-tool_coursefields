@@ -56,9 +56,11 @@ class set_course_fields_task extends \core\task\adhoc_task {
             mtrace("No fields specified");
             return;
         }
-        $category = \core_course_category::get($data->category);
+        // Get the category without throwing an exception if it was deleted or hidden from the user since the task was
+        // queued. Otherwise, the task would fail and would be retried again and again without any chance to succeed.
+        $category = \core_course_category::get($data->category, IGNORE_MISSING);
         if (!$category) {
-            mtrace("Invalid category id");
+            mtrace("Category with ID {$data->category} does not exist or is not visible to the user - skipping.");
             return;
         }
         $courses = $category->get_courses(

@@ -126,11 +126,24 @@ class set_fields {
      * This uses the same course list and the same check as the adhoc task, so it tells in advance if the task will skip
      * any courses when it is run as the current user. This includes hidden courses which the current user cannot see.
      *
+     * Please note: This function is called during the web request and loads the whole course list of the category
+     * subtree. This is a conscious decision as the costs are acceptable for a rarely used admin action:
+     * In a measurement with 3,000 courses, the course list returned by get_courses() needed 6.3 MB of
+     * memory. A full pass over all these courses, which additionally fetched the course record and the custom field data
+     * for each course, took 3 seconds, so this check itself (which does not do any database query per course) is
+     * well below that. For 10,000 courses, the runtime is expected to remain in the single-digit seconds range.
+     * Site admins, who are the most probable users to process huge category trees, skip the check completely.
+     *
      * @param \core_course_category $category The category to check
      * @return bool True if there is at least one course which the current user is not allowed to edit
      */
     public static function has_uneditable_courses(\core_course_category $category) {
         global $DB;
+
+        // Site admins can see and edit all courses, so there is no need to load the (possibly huge) course list for them.
+        if (is_siteadmin()) {
+            return false;
+        }
 
         $courses = $category->get_courses(
             [
@@ -170,6 +183,19 @@ class set_fields {
      * @param \stdClass $fields
      */
     public static function maybe_alter_course_fields($course, $fields) {
+        global $DB;
+
+        // Get the original course record without throwing an exception if the course was deleted since the course list
+        // was built by the adhoc task. Otherwise, the task would fail and would be retried as a whole.
+        // This has to be done before the permission check as that one would throw an exception for a deleted course as well.
+        $record = $DB->get_record('course', ['id' => $course->id]);
+        if (!$record) {
+            // Trace.
+            self::trace("Now skipping: Course with ID {$course->id} - the course does not exist anymore.");
+
+            return;
+        }
+
         // Do not do anything if the user can't edit the course.
         if (!$course->can_edit()) {
             // Trace.
@@ -177,9 +203,6 @@ class set_fields {
 
             return;
         }
-
-        // Get the original course record.
-        $record = get_course($course->id);
 
         // Get the custom fields data for this course.
         // We have to request _all_ fields and not just the visible ones here. Otherwise, fields which are configured

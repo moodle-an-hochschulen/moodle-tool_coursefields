@@ -863,6 +863,135 @@ final class tool_coursefields_test extends \advanced_testcase {
     }
 
     /**
+     * Test that the adhoc task exits cleanly if the category was deleted after the task was queued.
+     *
+     * @covers \tool_coursefields\task\set_course_fields_task
+     */
+    public function test_task_exits_if_category_deleted(): void {
+        global $DB;
+
+        // Create and login as admin to set up the environment.
+        $this->setAdminUser();
+
+        // Create a category and queue the task for it.
+        $category = $this->getDataGenerator()->create_category(['name' => 'Test Category']);
+        $categoryid = $category->id;
+        $this->queue_task_for_category($categoryid, get_admin()->id);
+
+        // Delete the category.
+        $category->delete_full(false);
+
+        // Run the task. It must not throw an exception, but must exit with a trace message.
+        $this->expectOutputRegex('/Category with ID ' . $categoryid . ' does not exist or is not visible to the user/');
+        $this->runAdhocTasks(\tool_coursefields\task\set_course_fields_task::class);
+
+        // The task must have been completed and must not be left for a retry.
+        $this->assertEquals(0, $DB->count_records('task_adhoc'));
+    }
+
+    /**
+     * Test that the adhoc task exits cleanly if the category was hidden from the user after the task was queued.
+     *
+     * @covers \tool_coursefields\task\set_course_fields_task
+     */
+    public function test_task_exits_if_category_hidden(): void {
+        global $DB;
+
+        // Create and login as admin to set up the environment.
+        $this->setAdminUser();
+
+        // Create a category with a course and a custom field.
+        $category = $this->getDataGenerator()->create_category(['name' => 'Test Category']);
+        $course = $this->getDataGenerator()->create_course(['category' => $category->id]);
+        $fieldcategory = $this->getDataGenerator()->create_custom_field_category([
+            'component' => 'core_course',
+            'area' => 'course',
+            'name' => 'Test Fields',
+        ]);
+        $this->getDataGenerator()->create_custom_field([
+            'categoryid' => $fieldcategory->get('id'),
+            'type' => 'text',
+            'shortname' => 'normalfield',
+            'name' => 'Normal Field',
+        ]);
+
+        // Queue the task for a user who is not allowed to view hidden categories.
+        $user = $this->getDataGenerator()->create_user();
+        $this->queue_task_for_category($category->id, $user->id);
+
+        // Hide the category.
+        $category->hide();
+
+        // Run the task. It must not throw an exception, but must exit with a trace message.
+        $this->expectOutputRegex('/Category with ID ' . $category->id . ' does not exist or is not visible to the user/');
+        $this->runAdhocTasks(\tool_coursefields\task\set_course_fields_task::class);
+
+        // The task must have been completed and must not be left for a retry.
+        $this->assertEquals(0, $DB->count_records('task_adhoc'));
+
+        // The course must not have been touched.
+        $this->assertEquals(['normalfield' => null], $this->get_course_field_values($course->id));
+    }
+
+    /**
+     * Test that a course which was deleted after the course list was built by the adhoc task is skipped.
+     *
+     * @covers \tool_coursefields\set_fields::maybe_alter_course_fields
+     */
+    public function test_maybe_alter_course_fields_skips_deleted_course(): void {
+        // Create and login as admin to set up the environment.
+        $this->setAdminUser();
+
+        // Create a course and a custom field.
+        $course = $this->getDataGenerator()->create_course();
+        $fieldcategory = $this->getDataGenerator()->create_custom_field_category([
+            'component' => 'core_course',
+            'area' => 'course',
+            'name' => 'Test Fields',
+        ]);
+        $this->getDataGenerator()->create_custom_field([
+            'categoryid' => $fieldcategory->get('id'),
+            'type' => 'text',
+            'shortname' => 'normalfield',
+            'name' => 'Normal Field',
+        ]);
+
+        // Get course as object with can_edit method, like the adhoc task does, and delete the course afterwards.
+        $courseobj = new \core_course_list_element($course);
+        delete_course($course->id, false);
+
+        // Process the course. This must not throw an exception and must not update anything.
+        $fields = new \stdClass();
+        $fields->customfield_normalfield = 'newvalue';
+        $fields->customfieldupdate_normalfield = TOOL_COURSEFIELDS_ALL;
+        $sink = $this->redirectEvents();
+        set_fields::maybe_alter_course_fields($courseobj, $fields);
+        $this->assertCount(0, $this->get_course_updated_events($sink));
+        $sink->close();
+    }
+
+    /**
+     * Helper function to queue the adhoc task for a category, like index.php does.
+     *
+     * @param int $categoryid The category id
+     * @param int $userid The id of the user who queues the task
+     */
+    private function queue_task_for_category(int $categoryid, int $userid): void {
+        $fields = new \stdClass();
+        $fields->customfield_normalfield = 'newvalue';
+        $fields->customfieldupdate_normalfield = TOOL_COURSEFIELDS_ALL;
+        $task = new \tool_coursefields\task\set_course_fields_task();
+        $task->set_userid($userid);
+        $task->set_custom_data(
+            [
+                'category' => $categoryid,
+                'fields' => $fields,
+            ]
+        );
+        \core\task\manager::queue_adhoc_task($task);
+    }
+
+    /**
      * Helper function to get the custom field values of a course, keyed by field shortname.
      *
      * @param int $courseid The course id

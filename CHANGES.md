@@ -4,7 +4,7 @@ moodle-tool_coursefields
 Changes
 -------
 
-### Unreleased
+### v5.2-r5
 
 * 2026-11-15 - Improvement: Do not load the whole course list of the category during the web request for site admins anymore when checking if courses will be skipped, as site admins are allowed to edit all courses anyway.
 * 2026-11-15 - Bugfix: The adhoc task failed and was retried as a whole if a course was deleted while the task was running. Now, such a course is skipped with a trace message.
